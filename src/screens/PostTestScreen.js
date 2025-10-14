@@ -29,9 +29,11 @@ function PostTestScreen() {
     // Store posttest data
     sessionStorage.setItem('posttestData', JSON.stringify(formData));
     
-    // Save all data to database and navigate to results
-    await saveDataToDatabase();
-    navigate('/results');
+    // Save all data to database
+    const surveyData = await saveDataToDatabase();
+    
+    // Navigate to results with data
+    navigate('/results', { state: { surveyData } });
   };
 
   const saveDataToDatabase = async () => {
@@ -76,9 +78,19 @@ function PostTestScreen() {
       } else {
         console.error('Error saving data');
       }
+      
+      // Return data for results page
+      return participantData;
     } catch (error) {
       console.error('Error saving to database:', error);
-      // Continue anyway - data is stored in sessionStorage
+      // Return data anyway - continue with display
+      return {
+        profile: JSON.parse(sessionStorage.getItem('profileData') || '{}'),
+        part2: JSON.parse(sessionStorage.getItem('part2Data') || '{}'),
+        part3: JSON.parse(sessionStorage.getItem('part3Data') || '{}'),
+        part4: JSON.parse(sessionStorage.getItem('awarenessData') || '{}'),
+        measurements: JSON.parse(sessionStorage.getItem('measurements') || '{}')
+      };
     }
   };
 
