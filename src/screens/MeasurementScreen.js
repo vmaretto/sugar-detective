@@ -106,7 +106,7 @@ function MeasurementScreen() {
             onClick={handleSubmit}
             disabled={!allMeasurementsFilled}
           >
-            {t('measurement.results')}
+            {t('common.next')}
           </button>
         </div>
       </div>

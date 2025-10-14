@@ -96,13 +96,31 @@ function ProfileScreen() {
           {/* Profession */}
           <div className="form-group">
             <label className="form-label">{t('profile.profession')}</label>
-            <input
-              type="text"
+            <select
               className="form-input"
               value={formData.profession}
               onChange={(e) => handleChange('profession', e.target.value)}
-              placeholder="e.g. Student, Engineer, Teacher"
-            />
+              style={{
+                padding: '12px',
+                fontSize: '16px',
+                borderRadius: '8px',
+                border: '2px solid #e5e7eb',
+                backgroundColor: 'white',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="">{t('profile.profession.select')}</option>
+              <option value="student">{t('profile.profession.student')}</option>
+              <option value="employee">{t('profile.profession.employee')}</option>
+              <option value="consultant">{t('profile.profession.consultant')}</option>
+              <option value="entrepreneur">{t('profile.profession.entrepreneur')}</option>
+              <option value="teacher">{t('profile.profession.teacher')}</option>
+              <option value="retired">{t('profile.profession.retired')}</option>
+              <option value="homemaker">{t('profile.profession.homemaker')}</option>
+              <option value="healthcare">{t('profile.profession.healthcare')}</option>
+              <option value="researcher">{t('profile.profession.researcher')}</option>
+              <option value="other">{t('profile.profession.other')}</option>
+            </select>
           </div>
 
           {/* Fruit/Vegetable Consumption */}
