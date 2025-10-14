@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Download, Trash2, RefreshCw, Settings } from 'lucide-react';
+import Leaderboard from '../components/Leaderboard';
+import { generateRanking } from '../utils/rankingUtils';
 
 const AdminScreen = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [participants, setParticipants] = useState([]);
+  const [ranking, setRanking] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -25,6 +28,11 @@ const AdminScreen = () => {
       
       const data = await response.json();
       setParticipants(data);
+      
+      // Generate ranking
+      const rankedData = generateRanking(data);
+      setRanking(rankedData);
+      
       setError(null);
     } catch (err) {
       console.error('Error fetching participants:', err);
@@ -365,6 +373,11 @@ const AdminScreen = () => {
             </table>
           </div>
         )}
+
+	{/* Leaderboard Section */}
+        <div style={{ marginTop: '3rem' }}>
+          <Leaderboard ranking={ranking} language={i18n.language} />
+        </div>
 
         {/* Back Button */}
         <div style={{ marginTop: '2rem', textAlign: 'center' }}>

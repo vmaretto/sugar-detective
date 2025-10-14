@@ -1,3 +1,6 @@
+import PerceptionComparison from '../components/PerceptionComparison';
+import PairsComparison from '../components/PairsComparison';
+import { calculateTotalScore } from '../utils/rankingUtils';
 import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +15,20 @@ const ResultsScreen = () => {
   const [downloading, setDownloading] = useState(false);
 
   const surveyData = location.state?.surveyData || {};
+
+// Load foods and pairs from surveyData
+const foods = surveyData.foods || [];
+const comparisonPairs = surveyData.comparison_pairs || [];
+
+// Calculate personal scores
+const personalScores = foods.length > 0 ? calculateTotalScore({
+  part2_data: surveyData.part2,
+  part3_data: surveyData.part3,
+  part4_awareness: surveyData.part4_awareness || surveyData.part4,
+  measurements: surveyData.measurements,
+  foods: foods,
+  pairs: comparisonPairs
+}) : { totalScore: 0, knowledgeScore: 0, awarenessScore: 0, pairsScore: 0 };
 
   const handleDownloadImage = async () => {
     if (!resultsRef.current) return;
@@ -265,6 +282,123 @@ const ResultsScreen = () => {
               {t('results.dataContribution')}
             </p>
           </div>
+
+// ========================================
+
+        {/* Personal Scores */}
+        <div style={{
+          background: 'white',
+          borderRadius: '20px',
+          padding: '2rem',
+          marginBottom: '2rem',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
+        }}>
+          <h2 style={{
+            fontSize: '1.75rem',
+            fontWeight: 'bold',
+            color: '#667eea',
+            marginBottom: '1.5rem'
+          }}>
+            I tuoi punteggi
+          </h2>
+          
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '1.5rem'
+          }}>
+            <div style={{
+              padding: '1.5rem',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              borderRadius: '15px',
+              color: 'white',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '0.875rem', opacity: 0.9, marginBottom: '0.5rem' }}>
+                Punteggio Totale
+              </div>
+              <div style={{ fontSize: '3rem', fontWeight: 'bold' }}>
+                {personalScores.totalScore}
+              </div>
+              <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>
+                / 100
+              </div>
+            </div>
+            
+            <div style={{
+              padding: '1.5rem',
+              border: '2px solid #10b981',
+              borderRadius: '15px',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
+                Conoscenza
+              </div>
+              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981' }}>
+                {personalScores.knowledgeScore}
+              </div>
+              <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                / 100
+              </div>
+            </div>
+            
+            <div style={{
+              padding: '1.5rem',
+              border: '2px solid #f59e0b',
+              borderRadius: '15px',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
+                Consapevolezza
+              </div>
+              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f59e0b' }}>
+                {personalScores.awarenessScore}
+              </div>
+              <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                / 100
+              </div>
+            </div>
+            
+            <div style={{
+              padding: '1.5rem',
+              border: '2px solid #8b5cf6',
+              borderRadius: '15px',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
+                Coppie
+              </div>
+              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#8b5cf6' }}>
+                {personalScores.pairsScore}
+              </div>
+              <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                / 100
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Perception vs Reality Comparison */}
+        {foods.length > 0 && (
+          <PerceptionComparison
+            foods={foods}
+            measurements={surveyData.measurements || {}}
+            part2Data={surveyData.part2 || {}}
+            language={i18n.language}
+          />
+        )}
+
+        {/* Pairs Comparison */}
+        {comparisonPairs.length > 0 && (
+          <PairsComparison
+            pairs={comparisonPairs}
+            foods={foods}
+            measurements={surveyData.measurements || {}}
+            part3Data={surveyData.part3 || {}}
+            language={i18n.language}
+          />
+        )}
+
 
           {/* Footer */}
           <div style={{

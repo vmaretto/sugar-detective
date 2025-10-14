@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Users, Download, RefreshCw, TrendingUp } from 'lucide-react';
+import Leaderboard from '../components/Leaderboard';
+import { generateRanking } from '../utils/rankingUtils';
 
 const COLORS = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
 
@@ -10,6 +12,7 @@ const DashboardScreen = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [participants, setParticipants] = useState([]);
+  const [ranking, setRanking] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
 
@@ -34,6 +37,10 @@ const DashboardScreen = () => {
       
       const data = await response.json();
       setParticipants(data);
+      
+      // Generate ranking
+      const rankedData = generateRanking(data);
+      setRanking(rankedData);
     } catch (err) {
       console.error('Error fetching data:', err);
       alert('Error loading data. Please try again.');
@@ -429,6 +436,12 @@ const DashboardScreen = () => {
             </p>
           </div>
         )}
+
+	{/* Leaderboard Section */}
+        <div style={{ marginTop: '3rem' }}>
+          <Leaderboard ranking={ranking} language={i18n.language} />
+        </div>
+
 
         {/* Back Button */}
         <div style={{ marginTop: '2rem', textAlign: 'center' }}>
