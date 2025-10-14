@@ -48,9 +48,11 @@ const ResultsScreen = () => {
   const part4 = surveyData.part4_awareness || surveyData.part4 || {};
 
   // Calculate knowledge score from part2 responses (scale 1-6)
-  const part2Values = Object.entries(part2)
-    .filter(([key]) => key.startsWith('response_q'))
-    .map(([, value]) => parseInt(value));
+  // part2 structure: { responses: { "1": 1, "2": 2, "3": 1, ... } }
+  const part2Responses = part2.responses || {};
+  const part2Values = Object.values(part2Responses)
+    .map(val => parseInt(val))
+    .filter(val => !isNaN(val));
   
   const knowledgeAvg = part2Values.length > 0
     ? (part2Values.reduce((sum, val) => sum + val, 0) / part2Values.length).toFixed(1)
