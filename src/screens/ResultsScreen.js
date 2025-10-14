@@ -1,11 +1,11 @@
+import React, { useState, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { Trophy, Download, Home } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import PerceptionComparison from '../components/PerceptionComparison';
 import PairsComparison from '../components/PairsComparison';
 import { calculateTotalScore } from '../utils/rankingUtils';
-import React, { useState, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation, useTranslation as useI18n } from 'react-i18next';
-import { Trophy, Download, Home } from 'lucide-react';
-import html2canvas from 'html2canvas';
 
 const ResultsScreen = () => {
   const { t, i18n } = useTranslation();
@@ -16,19 +16,19 @@ const ResultsScreen = () => {
 
   const surveyData = location.state?.surveyData || {};
 
-// Load foods and pairs from surveyData
-const foods = surveyData.foods || [];
-const comparisonPairs = surveyData.comparison_pairs || [];
+  // Load foods and pairs from surveyData
+  const foods = surveyData.foods || [];
+  const comparisonPairs = surveyData.comparison_pairs || [];
 
-// Calculate personal scores
-const personalScores = foods.length > 0 ? calculateTotalScore({
-  part2_data: surveyData.part2,
-  part3_data: surveyData.part3,
-  part4_awareness: surveyData.part4_awareness || surveyData.part4,
-  measurements: surveyData.measurements,
-  foods: foods,
-  pairs: comparisonPairs
-}) : { totalScore: 0, knowledgeScore: 0, awarenessScore: 0, pairsScore: 0 };
+  // Calculate personal scores
+  const personalScores = foods.length > 0 ? calculateTotalScore({
+    part2_data: surveyData.part2,
+    part3_data: surveyData.part3,
+    part4_awareness: surveyData.part4_awareness || surveyData.part4,
+    measurements: surveyData.measurements,
+    foods: foods,
+    pairs: comparisonPairs
+  }) : { totalScore: 0, knowledgeScore: 0, awarenessScore: 0, pairsScore: 0 };
 
   const handleDownloadImage = async () => {
     if (!resultsRef.current) return;
@@ -60,43 +60,7 @@ const personalScores = foods.length > 0 ? calculateTotalScore({
 
   // Calculate some stats
   const profile = surveyData.profile || {};
-  const part2 = surveyData.part2 || {};
   const measurements = surveyData.measurements || {};
-  const part4 = surveyData.part4_awareness || surveyData.part4 || {};
-
-  // Calculate knowledge score from part2 responses (scale 1-6)
-  // part2 structure: { responses: { "1": 1, "2": 2, "3": 1, ... } }
-  const part2Responses = part2.responses || {};
-  const part2Values = Object.values(part2Responses)
-    .map(val => parseInt(val))
-    .filter(val => !isNaN(val));
-  
-  const knowledgeAvg = part2Values.length > 0
-    ? (part2Values.reduce((sum, val) => sum + val, 0) / part2Values.length).toFixed(1)
-    : 'N/A';
-
-  // Calculate awareness score from part4 
-  // Map text responses to numbers: very/much = 5, partly/bit = 3, little = 2, not/same = 1
-  const awarenessMap = {
-    'very': 5, 'much': 5,
-    'partly': 3, 'bit': 3,
-    'little': 2,
-    'not': 1, 'same': 1, 'no': 1
-  };
-  
-  const awarenessValues = Object.values(part4)
-    .map(val => {
-      if (typeof val === 'string') {
-        const matched = Object.keys(awarenessMap).find(key => val.toLowerCase().includes(key));
-        return matched ? awarenessMap[matched] : null;
-      }
-      return null;
-    })
-    .filter(val => val !== null);
-
-  const awarenessAvg = awarenessValues.length > 0
-    ? (awarenessValues.reduce((sum, val) => sum + val, 0) / awarenessValues.length).toFixed(1)
-    : 'N/A';
 
   return (
     <div style={{
@@ -108,7 +72,7 @@ const personalScores = foods.length > 0 ? calculateTotalScore({
       justifyContent: 'center'
     }}>
       <div style={{
-        maxWidth: '800px',
+        maxWidth: '900px',
         width: '100%'
       }}>
         {/* Results Card */}
@@ -140,50 +104,135 @@ const personalScores = foods.length > 0 ? calculateTotalScore({
             </p>
           </div>
 
-          {/* Summary Stats */}
+          {/* Personal Scores */}
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-            gap: '1rem',
-            marginBottom: '2rem'
+            background: '#f9fafb',
+            borderRadius: '20px',
+            padding: '2rem',
+            marginBottom: '2rem',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
           }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              borderRadius: '15px',
-              padding: '1.5rem',
-              textAlign: 'center',
-              color: 'white'
+            <h2 style={{
+              fontSize: '1.75rem',
+              fontWeight: 'bold',
+              color: '#667eea',
+              marginBottom: '1.5rem',
+              textAlign: 'center'
             }}>
-              <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
-                {knowledgeAvg}
-              </div>
-              <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>
-                {t('results.knowledgeScore')}
-              </div>
-            </div>
-
+              I tuoi punteggi
+            </h2>
+            
             <div style={{
-              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-              borderRadius: '15px',
-              padding: '1.5rem',
-              textAlign: 'center',
-              color: 'white'
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '1.5rem'
             }}>
-              <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
-                {awarenessAvg}
+              <div style={{
+                padding: '1.5rem',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                borderRadius: '15px',
+                color: 'white',
+                textAlign: 'center',
+                boxShadow: '0 8px 20px rgba(102, 126, 234, 0.3)'
+              }}>
+                <div style={{ fontSize: '0.875rem', opacity: 0.9, marginBottom: '0.5rem' }}>
+                  Punteggio Totale
+                </div>
+                <div style={{ fontSize: '3rem', fontWeight: 'bold' }}>
+                  {personalScores.totalScore}
+                </div>
+                <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>
+                  / 100
+                </div>
               </div>
-              <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>
-                {t('results.awarenessScore')}
+              
+              <div style={{
+                padding: '1.5rem',
+                background: 'white',
+                border: '2px solid #10b981',
+                borderRadius: '15px',
+                textAlign: 'center',
+                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.1)'
+              }}>
+                <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
+                  Conoscenza
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981' }}>
+                  {personalScores.knowledgeScore}
+                </div>
+                <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                  / 100
+                </div>
+              </div>
+              
+              <div style={{
+                padding: '1.5rem',
+                background: 'white',
+                border: '2px solid #f59e0b',
+                borderRadius: '15px',
+                textAlign: 'center',
+                boxShadow: '0 4px 12px rgba(245, 158, 11, 0.1)'
+              }}>
+                <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
+                  Consapevolezza
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f59e0b' }}>
+                  {personalScores.awarenessScore}
+                </div>
+                <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                  / 100
+                </div>
+              </div>
+              
+              <div style={{
+                padding: '1.5rem',
+                background: 'white',
+                border: '2px solid #8b5cf6',
+                borderRadius: '15px',
+                textAlign: 'center',
+                boxShadow: '0 4px 12px rgba(139, 92, 246, 0.1)'
+              }}>
+                <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
+                  Coppie
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#8b5cf6' }}>
+                  {personalScores.pairsScore}
+                </div>
+                <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                  / 100
+                </div>
               </div>
             </div>
           </div>
+
+          {/* Perception vs Reality Comparison */}
+          {foods.length > 0 && (
+            <PerceptionComparison
+              foods={foods}
+              measurements={surveyData.measurements || {}}
+              part2Data={surveyData.part2 || {}}
+              language={i18n.language}
+            />
+          )}
+
+          {/* Pairs Comparison */}
+          {comparisonPairs.length > 0 && (
+            <PairsComparison
+              pairs={comparisonPairs}
+              foods={foods}
+              measurements={surveyData.measurements || {}}
+              part3Data={surveyData.part3 || {}}
+              language={i18n.language}
+            />
+          )}
 
           {/* Profile Summary */}
           <div style={{
             background: '#f3f4f6',
             borderRadius: '15px',
             padding: '1.5rem',
-            marginBottom: '2rem'
+            marginBottom: '2rem',
+            marginTop: '2rem'
           }}>
             <h3 style={{
               fontSize: '1.25rem',
@@ -210,7 +259,7 @@ const personalScores = foods.length > 0 ? calculateTotalScore({
             </div>
           </div>
 
-          {/* Your Estimations */}
+          {/* Your Measurements */}
           {Object.keys(measurements).length > 0 && (
             <div style={{
               background: '#f3f4f6',
@@ -224,21 +273,22 @@ const personalScores = foods.length > 0 ? calculateTotalScore({
                 color: '#667eea',
                 marginBottom: '1rem'
               }}>
-                {t('results.yourEstimations')}
+                Le tue misurazioni
               </h3>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
                 gap: '0.75rem'
               }}>
-                {Object.entries(measurements).map(([food, value]) => {
+                {Object.entries(measurements).map(([foodId, value]) => {
                   const { brix, glucose } = value || {};
-                  const formattedBrix = brix ?? 'N/A';
-                  const formattedGlucose = glucose ?? 'N/A';
+                  const food = foods.find(f => f.id === foodId);
+                  const foodName = food ? (i18n.language === 'it' ? food.name_it : food.name_en) : foodId;
+                  const emoji = food ? food.emoji : '🍎';
 
                   return (
                     <div
-                      key={food}
+                      key={foodId}
                       style={{
                         background: 'white',
                         padding: '0.75rem',
@@ -246,19 +296,17 @@ const personalScores = foods.length > 0 ? calculateTotalScore({
                         textAlign: 'center'
                       }}
                     >
-                      <div style={{ fontWeight: 'bold', color: '#667eea', marginBottom: '0.25rem' }}>
-                        {food.charAt(0).toUpperCase() + food.slice(1)}
+                      <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>
+                        {emoji}
                       </div>
-                      <div style={{ fontSize: '0.95rem', color: '#111', marginBottom: '0.25rem' }}>
-                        <span style={{ fontWeight: 600 }}>°Bx:</span>{' '}
-                        <span style={{ fontWeight: 'bold' }}>{formattedBrix}</span>
+                      <div style={{ fontWeight: 'bold', color: '#667eea', marginBottom: '0.25rem', fontSize: '0.875rem' }}>
+                        {foodName}
                       </div>
-                      <div style={{ fontSize: '0.95rem', color: '#111', marginBottom: '0.25rem' }}>
-                        <span style={{ fontWeight: 600 }}>Glucose:</span>{' '}
-                        <span style={{ fontWeight: 'bold' }}>{formattedGlucose}</span>
+                      <div style={{ fontSize: '0.875rem', color: '#111', marginBottom: '0.25rem' }}>
+                        <span style={{ fontWeight: 600 }}>°Bx:</span> {brix ?? 'N/A'}
                       </div>
-                      <div style={{ fontSize: '0.75rem', color: '#666' }}>
-                        vs Apple
+                      <div style={{ fontSize: '0.875rem', color: '#111' }}>
+                        <span style={{ fontWeight: 600 }}>Glucosio:</span> {glucose ?? 'N/A'}
                       </div>
                     </div>
                   );
@@ -282,123 +330,6 @@ const personalScores = foods.length > 0 ? calculateTotalScore({
               {t('results.dataContribution')}
             </p>
           </div>
-
-// ========================================
-
-        {/* Personal Scores */}
-        <div style={{
-          background: 'white',
-          borderRadius: '20px',
-          padding: '2rem',
-          marginBottom: '2rem',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
-        }}>
-          <h2 style={{
-            fontSize: '1.75rem',
-            fontWeight: 'bold',
-            color: '#667eea',
-            marginBottom: '1.5rem'
-          }}>
-            I tuoi punteggi
-          </h2>
-          
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '1.5rem'
-          }}>
-            <div style={{
-              padding: '1.5rem',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              borderRadius: '15px',
-              color: 'white',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '0.875rem', opacity: 0.9, marginBottom: '0.5rem' }}>
-                Punteggio Totale
-              </div>
-              <div style={{ fontSize: '3rem', fontWeight: 'bold' }}>
-                {personalScores.totalScore}
-              </div>
-              <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>
-                / 100
-              </div>
-            </div>
-            
-            <div style={{
-              padding: '1.5rem',
-              border: '2px solid #10b981',
-              borderRadius: '15px',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
-                Conoscenza
-              </div>
-              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981' }}>
-                {personalScores.knowledgeScore}
-              </div>
-              <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                / 100
-              </div>
-            </div>
-            
-            <div style={{
-              padding: '1.5rem',
-              border: '2px solid #f59e0b',
-              borderRadius: '15px',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
-                Consapevolezza
-              </div>
-              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f59e0b' }}>
-                {personalScores.awarenessScore}
-              </div>
-              <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                / 100
-              </div>
-            </div>
-            
-            <div style={{
-              padding: '1.5rem',
-              border: '2px solid #8b5cf6',
-              borderRadius: '15px',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
-                Coppie
-              </div>
-              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#8b5cf6' }}>
-                {personalScores.pairsScore}
-              </div>
-              <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                / 100
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Perception vs Reality Comparison */}
-        {foods.length > 0 && (
-          <PerceptionComparison
-            foods={foods}
-            measurements={surveyData.measurements || {}}
-            part2Data={surveyData.part2 || {}}
-            language={i18n.language}
-          />
-        )}
-
-        {/* Pairs Comparison */}
-        {comparisonPairs.length > 0 && (
-          <PairsComparison
-            pairs={comparisonPairs}
-            foods={foods}
-            measurements={surveyData.measurements || {}}
-            part3Data={surveyData.part3 || {}}
-            language={i18n.language}
-          />
-        )}
-
 
           {/* Footer */}
           <div style={{
