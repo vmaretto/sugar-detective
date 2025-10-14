@@ -45,14 +45,38 @@ const ResultsScreen = () => {
   const profile = surveyData.profile || {};
   const part2 = surveyData.part2 || {};
   const measurements = surveyData.measurements || {};
-  const part4 = surveyData.part4 || {};
+  const part4 = surveyData.part4_awareness || surveyData.part4 || {};
 
-  const knowledgeAvg = part2.knowledge1 && part2.knowledge2 && part2.knowledge3
-    ? ((parseInt(part2.knowledge1) + parseInt(part2.knowledge2) + parseInt(part2.knowledge3)) / 3).toFixed(1)
+  // Calculate knowledge score from part2 responses (scale 1-6)
+  const part2Values = Object.entries(part2)
+    .filter(([key]) => key.startsWith('response_q'))
+    .map(([, value]) => parseInt(value));
+  
+  const knowledgeAvg = part2Values.length > 0
+    ? (part2Values.reduce((sum, val) => sum + val, 0) / part2Values.length).toFixed(1)
     : 'N/A';
 
-  const awarenessAvg = part4.awareness1 && part4.awareness2 && part4.awareness3
-    ? ((parseInt(part4.awareness1) + parseInt(part4.awareness2) + parseInt(part4.awareness3)) / 3).toFixed(1)
+  // Calculate awareness score from part4 
+  // Map text responses to numbers: very/much = 5, partly/bit = 3, little = 2, not/same = 1
+  const awarenessMap = {
+    'very': 5, 'much': 5,
+    'partly': 3, 'bit': 3,
+    'little': 2,
+    'not': 1, 'same': 1, 'no': 1
+  };
+  
+  const awarenessValues = Object.values(part4)
+    .map(val => {
+      if (typeof val === 'string') {
+        const matched = Object.keys(awarenessMap).find(key => val.toLowerCase().includes(key));
+        return matched ? awarenessMap[matched] : null;
+      }
+      return null;
+    })
+    .filter(val => val !== null);
+
+  const awarenessAvg = awarenessValues.length > 0
+    ? (awarenessValues.reduce((sum, val) => sum + val, 0) / awarenessValues.length).toFixed(1)
     : 'N/A';
 
   return (
@@ -162,7 +186,7 @@ const ResultsScreen = () => {
                 <strong>{t('profile.gender')}:</strong> {profile.gender || 'N/A'}
               </div>
               <div>
-                <strong>{t('profile.sugarHabits')}:</strong> {profile.sugarHabits || 'N/A'}
+                <strong>{t('profile.sugarHabits')}:</strong> {profile.consumption || profile.sugarHabits || 'N/A'}
               </div>
             </div>
           </div>
