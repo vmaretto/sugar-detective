@@ -316,20 +316,31 @@ const ResultsScreen = () => {
           )}
 
           {/* Thank You Message */}
-          <div style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            borderRadius: '15px',
-            padding: '2rem',
-            textAlign: 'center',
-            color: 'white'
-          }}>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-              {t('results.thankYou')}
-            </h3>
-            <p style={{ opacity: 0.9 }}>
-              {t('results.dataContribution')}
-            </p>
-          </div>
+<div style={{
+  background: '#f9fafb',
+  border: '2px solid #667eea',
+  borderRadius: '15px',
+  padding: '2rem',
+  textAlign: 'center'
+}}>
+  <h3 style={{ 
+    fontSize: '1.5rem', 
+    fontWeight: 'bold', 
+    marginBottom: '0.5rem',
+    color: '#667eea'
+  }}>
+    {t('results.thankYou')}
+  </h3>
+  <p style={{ 
+    color: '#666',
+    fontSize: '1.125rem',
+    lineHeight: '1.6',
+    margin: 0
+  }}>
+    {t('results.dataContribution')}
+  </p>
+</div>
+
 
           {/* Footer */}
           <div style={{

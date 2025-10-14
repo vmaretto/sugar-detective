@@ -43,7 +43,22 @@ export const calculateKnowledgeScore = (participantData) => {
   let count = 0;
   
   foodsList.forEach(food => {
-    const perceived = part2[food.id];
+    // Try to get perceived value from different possible structures
+    let perceived = part2[food.id];
+    
+    // If not found, try numeric keys (for backward compatibility)
+    if (!perceived && part2.responses) {
+      perceived = part2.responses[food.id];
+    }
+    
+    // If still not found, try by index
+    if (!perceived) {
+      const index = foodsList.findIndex(f => f.id === food.id);
+      if (index >= 0) {
+        perceived = part2[index.toString()] || part2[(index + 1).toString()];
+      }
+    }
+    
     const measured = meas[food.id]?.brix;
     
     if (perceived && measured) {

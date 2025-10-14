@@ -1,6 +1,6 @@
-// src/components/PerceptionComparison.js
+// src/components/PerceptionComparison.js - VERSIONE MIGLIORATA
 import React from 'react';
-import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { CheckCircle, XCircle, AlertCircle, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { comparePerceptionVsReality, brixToSweetness } from '../utils/sugarUtils';
 
 const PerceptionComparison = ({ foods, measurements, part2Data, language }) => {
@@ -40,6 +40,47 @@ const PerceptionComparison = ({ foods, measurements, part2Data, language }) => {
     return '#ef4444';
   };
 
+  const getFeedbackMessage = (status, difference) => {
+    const diff = Math.abs(parseFloat(difference));
+    
+    if (status === 'accurate') {
+      return language === 'it'
+        ? '🎯 Ottimo! La tua stima era molto vicina alla realtà.'
+        : '🎯 Great! Your estimate was very close to reality.';
+    } else if (status === 'underestimated') {
+      if (diff > 3) {
+        return language === 'it'
+          ? '😮 Sorpresa! Questo alimento è molto più dolce di quanto pensassi.'
+          : '😮 Surprise! This food is much sweeter than you thought.';
+      } else {
+        return language === 'it'
+          ? '📊 Hai sottostimato un po\' la dolcezza. Capita spesso con questo alimento!'
+          : '📊 You underestimated the sweetness a bit. This happens often with this food!';
+      }
+    } else {
+      if (diff > 3) {
+        return language === 'it'
+          ? '🤔 Hai sopravvalutato parecchio la dolcezza. L\'aspetto può ingannare!'
+          : '🤔 You overestimated the sweetness quite a bit. Appearance can be deceiving!';
+      } else {
+        return language === 'it'
+          ? '💭 Pensavi fosse più dolce di quanto sia realmente.'
+          : '💭 You thought it was sweeter than it actually is.';
+      }
+    }
+  };
+
+  // Check if we have valid data
+  const hasData = foods.some(food => {
+    const perceived = part2Data[food.id];
+    const measured = measurements[food.id]?.brix;
+    return perceived && measured;
+  });
+
+  if (!hasData) {
+    return null; // Don't show section if no data
+  }
+
   return (
     <div style={{
       background: 'white',
@@ -52,7 +93,7 @@ const PerceptionComparison = ({ foods, measurements, part2Data, language }) => {
         fontSize: '1.75rem',
         fontWeight: 'bold',
         color: '#667eea',
-        marginBottom: '1rem'
+        marginBottom: '0.5rem'
       }}>
         {language === 'it' ? '📊 Percezione vs Realtà' : '📊 Perception vs Reality'}
       </h2>
@@ -64,12 +105,13 @@ const PerceptionComparison = ({ foods, measurements, part2Data, language }) => {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {foods.map(food => {
-          const perceivedSweetness = part2Data[food.id] || 0;
-          const measuredBrix = measurements[food.id]?.brix || 0;
+          const perceivedSweetness = part2Data[food.id];
+          const measuredBrix = measurements[food.id]?.brix;
           
           if (!perceivedSweetness || !measuredBrix) return null;
 
           const comparison = comparePerceptionVsReality(perceivedSweetness, measuredBrix);
+          const feedbackMessage = getFeedbackMessage(comparison.status, comparison.difference);
           
           return (
             <div
@@ -85,7 +127,9 @@ const PerceptionComparison = ({ foods, measurements, part2Data, language }) => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                marginBottom: '1rem'
+                marginBottom: '1rem',
+                flexWrap: 'wrap',
+                gap: '1rem'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <span style={{ fontSize: '2.5rem' }}>{food.emoji}</span>
@@ -109,6 +153,24 @@ const PerceptionComparison = ({ foods, measurements, part2Data, language }) => {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Feedback Message */}
+              <div style={{
+                padding: '1rem',
+                background: 'white',
+                borderRadius: '10px',
+                marginBottom: '1rem',
+                border: '2px solid #f3f4f6'
+              }}>
+                <p style={{ 
+                  margin: 0, 
+                  color: '#666',
+                  fontSize: '1rem',
+                  lineHeight: '1.5'
+                }}>
+                  {feedbackMessage}
+                </p>
               </div>
 
               <div style={{
