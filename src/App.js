@@ -15,6 +15,7 @@ import PostTestScreen from './screens/PostTestScreen';
 import ResultsScreen from './screens/ResultsScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import AdminScreen from './screens/AdminScreen';
+import ConfigScreen from './screens/ConfigScreen';
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
           <Route path="/results" element={<ResultsScreen />} />
           <Route path="/dashboard" element={<DashboardScreen />} />
           <Route path="/admin" element={<AdminScreen />} />
+          <Route path="/config" element={<ConfigScreen />} />
         </Routes>
       </div>
     </Router>

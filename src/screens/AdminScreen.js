@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Download, Trash2, RefreshCw } from 'lucide-react';
+import { Download, Trash2, RefreshCw, Settings } from 'lucide-react';
 
 const AdminScreen = () => {
   const { t } = useTranslation();
@@ -205,6 +205,26 @@ const AdminScreen = () => {
             >
               <RefreshCw size={20} />
               {t('admin.refresh')}
+            </button>
+
+            <button
+              onClick={() => navigate('/config')}
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: '#f59e0b',
+                color: 'white',
+                border: 'none',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '1rem',
+                fontWeight: '600'
+              }}
+            >
+              <Settings size={20} />
+              Configurazione
             </button>
 
             <button

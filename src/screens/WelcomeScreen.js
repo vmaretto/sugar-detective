@@ -15,8 +15,28 @@ function WelcomeScreen() {
     localStorage.setItem('language', lang);
   };
 
-  const handleStart = () => {
-    navigate('/profile');
+  const handleStart = async () => {
+    try {
+      // Carica configurazione attiva
+      const response = await fetch('/api/config?active=true');
+      
+      if (!response.ok) {
+        throw new Error('No active configuration found');
+      }
+      
+      const configData = await response.json();
+      
+      // Salva gli alimenti in sessionStorage
+      sessionStorage.setItem('foods', JSON.stringify(configData.foods));
+      
+      // Salva le coppie per la Parte 3
+      sessionStorage.setItem('comparisonPairs', JSON.stringify(configData.pairs));
+      
+      navigate('/profile');
+    } catch (error) {
+      console.error('Error loading config:', error);
+      alert('Errore nel caricamento della configurazione. Verifica che ci sia una configurazione attiva in Admin > Configurazione.');
+    }
   };
 
   return (
