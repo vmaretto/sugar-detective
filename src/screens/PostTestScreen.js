@@ -46,6 +46,7 @@ function PostTestScreen() {
       const measurements = JSON.parse(sessionStorage.getItem('measurements') || '{}');
       const posttestData = formData;
       const foods = JSON.parse(sessionStorage.getItem('foods') || '[]');
+      const comparisonPairs = JSON.parse(sessionStorage.getItem('comparisonPairs') || '[]');
       const language = localStorage.getItem('language') || 'it';
 
       // Prepare document
@@ -58,7 +59,8 @@ function PostTestScreen() {
         part4_awareness: awarenessData,
         measurements,
         part5_posttest: posttestData,
-        foods
+        foods,
+        comparison_pairs: comparisonPairs
       };
 
       // Store locally for results page
@@ -89,7 +91,9 @@ function PostTestScreen() {
         part2: JSON.parse(sessionStorage.getItem('part2Data') || '{}'),
         part3: JSON.parse(sessionStorage.getItem('part3Data') || '{}'),
         part4: JSON.parse(sessionStorage.getItem('awarenessData') || '{}'),
-        measurements: JSON.parse(sessionStorage.getItem('measurements') || '{}')
+        measurements: JSON.parse(sessionStorage.getItem('measurements') || '{}'),
+        foods: JSON.parse(sessionStorage.getItem('foods') || '[]'),
+        comparison_pairs: JSON.parse(sessionStorage.getItem('comparisonPairs') || '[]')
       };
     }
   };
