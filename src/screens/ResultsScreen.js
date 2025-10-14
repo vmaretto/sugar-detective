@@ -188,27 +188,38 @@ const ResultsScreen = () => {
                 gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
                 gap: '0.75rem'
               }}>
-                {Object.entries(measurements).map(([food, value]) => (
-                  <div
-                    key={food}
-                    style={{
-                      background: 'white',
-                      padding: '0.75rem',
-                      borderRadius: '10px',
-                      textAlign: 'center'
-                    }}
-                  >
-                    <div style={{ fontWeight: 'bold', color: '#667eea', marginBottom: '0.25rem' }}>
-                      {food.charAt(0).toUpperCase() + food.slice(1)}
+                {Object.entries(measurements).map(([food, value]) => {
+                  const { brix, glucose } = value || {};
+                  const formattedBrix = brix ?? 'N/A';
+                  const formattedGlucose = glucose ?? 'N/A';
+
+                  return (
+                    <div
+                      key={food}
+                      style={{
+                        background: 'white',
+                        padding: '0.75rem',
+                        borderRadius: '10px',
+                        textAlign: 'center'
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', color: '#667eea', marginBottom: '0.25rem' }}>
+                        {food.charAt(0).toUpperCase() + food.slice(1)}
+                      </div>
+                      <div style={{ fontSize: '0.95rem', color: '#111', marginBottom: '0.25rem' }}>
+                        <span style={{ fontWeight: 600 }}>°Bx:</span>{' '}
+                        <span style={{ fontWeight: 'bold' }}>{formattedBrix}</span>
+                      </div>
+                      <div style={{ fontSize: '0.95rem', color: '#111', marginBottom: '0.25rem' }}>
+                        <span style={{ fontWeight: 600 }}>Glucose:</span>{' '}
+                        <span style={{ fontWeight: 'bold' }}>{formattedGlucose}</span>
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#666' }}>
+                        vs Apple
+                      </div>
                     </div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
-                      {value}x
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: '#666' }}>
-                      vs Apple
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
