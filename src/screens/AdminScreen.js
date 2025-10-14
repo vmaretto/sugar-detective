@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, useTranslation as useI18n } from 'react-i18next';
 import { Download, Trash2, RefreshCw, Settings } from 'lucide-react';
 import Leaderboard from '../components/Leaderboard';
 import { generateRanking } from '../utils/rankingUtils';
 
 const AdminScreen = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [participants, setParticipants] = useState([]);
   const [ranking, setRanking] = useState([]);

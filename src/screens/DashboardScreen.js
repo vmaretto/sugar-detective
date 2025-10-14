@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, useTranslation as useI18n } from 'react-i18next';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Users, Download, RefreshCw, TrendingUp } from 'lucide-react';
 import Leaderboard from '../components/Leaderboard';
@@ -9,7 +9,7 @@ import { generateRanking } from '../utils/rankingUtils';
 const COLORS = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
 
 const DashboardScreen = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [participants, setParticipants] = useState([]);
   const [ranking, setRanking] = useState([]);

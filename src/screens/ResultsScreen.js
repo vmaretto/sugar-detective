@@ -3,12 +3,12 @@ import PairsComparison from '../components/PairsComparison';
 import { calculateTotalScore } from '../utils/rankingUtils';
 import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, useTranslation as useI18n } from 'react-i18next';
 import { Trophy, Download, Home } from 'lucide-react';
 import html2canvas from 'html2canvas';
 
 const ResultsScreen = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const resultsRef = useRef(null);
