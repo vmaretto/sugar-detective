@@ -16,32 +16,29 @@ function PreTestScreen() {
 
   const loadFoods = async () => {
     try {
-      // Load from API or use default
-      const response = await fetch('/api/foods');
-      if (response.ok) {
-        const foodsList = await response.json();
+      // Load foods from sessionStorage (set by WelcomeScreen from active config)
+      const storedFoods = sessionStorage.getItem('foods');
+      
+      if (storedFoods) {
+        const foodsList = JSON.parse(storedFoods);
         setFoods(foodsList);
         initializeResponses(foodsList);
+        
+        // Also save to sessionStorage for other screens
+        sessionStorage.setItem('foods', JSON.stringify(foodsList));
       } else {
-        setDefaultFoods();
+        // If no stored foods, redirect to home
+        console.error('No foods configuration found. Redirecting to home.');
+        alert('Configurazione non trovata. Riparti dalla home.');
+        navigate('/');
       }
     } catch (error) {
       console.error('Error loading foods:', error);
-      setDefaultFoods();
+      alert('Errore nel caricamento degli alimenti.');
+      navigate('/');
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const setDefaultFoods = () => {
-    const defaultFoods = [
-      { id: 'apple', name_it: 'Mela', name_en: 'Apple', emoji: '🍎', isReference: true },
-      { id: 'banana', name_it: 'Banana', name_en: 'Banana', emoji: '🍌', isReference: false },
-      { id: 'watermelon', name_it: 'Anguria', name_en: 'Watermelon', emoji: '🍉', isReference: false },
-      { id: 'tomato', name_it: 'Pomodoro', name_en: 'Tomato', emoji: '🍅', isReference: false },
-      { id: 'carrot', name_it: 'Carota', name_en: 'Carrot', emoji: '🥕', isReference: false },
-      { id: 'pepper', name_it: 'Peperone', name_en: 'Bell Pepper', emoji: '🫑', isReference: false }
-    ];
-    setFoods(defaultFoods);
-    initializeResponses(defaultFoods);
   };
 
   const initializeResponses = (foodsList) => {

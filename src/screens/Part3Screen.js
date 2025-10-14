@@ -6,37 +6,60 @@ import { useTranslation } from 'react-i18next';
 function Part3Screen() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const [pairs, setPairs] = useState([]);
   const [foods, setFoods] = useState([]);
   const [responses, setResponses] = useState({});
-  const [referenceFood, setReferenceFood] = useState(null);
 
   useEffect(() => {
-    // Load foods from session
-    const storedFoods = JSON.parse(sessionStorage.getItem('foods') || '[]');
-    const reference = storedFoods.find(f => f.isReference) || storedFoods[0];
-    const otherFoods = storedFoods.filter(f => !f.isReference);
+    // Load comparison pairs from sessionStorage (set by WelcomeScreen)
+    const storedPairs = sessionStorage.getItem('comparisonPairs');
+    const storedFoods = sessionStorage.getItem('foods');
     
-    setFoods(otherFoods);
-    setReferenceFood(reference);
+    if (!storedPairs || !storedFoods) {
+      console.error('No comparison pairs or foods found');
+      alert('Configurazione non trovata. Riparti dalla home.');
+      navigate('/');
+      return;
+    }
+    
+    const pairsData = JSON.parse(storedPairs);
+    const foodsData = JSON.parse(storedFoods);
+    
+    // Create a lookup map for foods
+    const foodsMap = {};
+    foodsData.forEach(food => {
+      foodsMap[food.id] = food;
+    });
+    
+    // Transform pairs into usable format
+    const transformedPairs = pairsData.map((pair, index) => ({
+      id: `pair_${index}`,
+      foodA: foodsMap[pair.food_a_id],
+      foodB: foodsMap[pair.food_b_id],
+      order: pair.order_position || index
+    })).filter(pair => pair.foodA && pair.foodB); // Filter out any invalid pairs
+    
+    setPairs(transformedPairs);
+    setFoods(foodsData);
     
     // Initialize responses
     const initialResponses = {};
-    otherFoods.forEach(food => {
-      initialResponses[food.id] = null;
+    transformedPairs.forEach(pair => {
+      initialResponses[pair.id] = null;
     });
     setResponses(initialResponses);
-  }, []);
+  }, [navigate]);
 
-  const handleComparisonSelect = (foodId, value) => {
+  const handleComparisonSelect = (pairId, value) => {
     setResponses(prev => ({
       ...prev,
-      [foodId]: value
+      [pairId]: value
     }));
   };
 
   const handleSubmit = () => {
     // Validate all comparisons made
-    const allCompleted = foods.every(food => responses[food.id] !== null);
+    const allCompleted = pairs.every(pair => responses[pair.id] !== null);
     
     if (!allCompleted) {
       alert(t('common.error') + ': ' + (i18n.language === 'it' ? 'Per favore completa tutti i confronti' : 'Please complete all comparisons'));
@@ -50,10 +73,11 @@ function Part3Screen() {
   };
 
   const getFoodName = (food) => {
+    if (!food) return '';
     return i18n.language === 'it' ? food.name_it : food.name_en;
   };
 
-  if (!referenceFood) {
+  if (pairs.length === 0) {
     return (
       <div className="screen">
         <div className="loading">
@@ -68,66 +92,82 @@ function Part3Screen() {
       <div className="container" style={{ maxWidth: '700px' }}>
         <div className="card">
           <h2>Parte 3 - Conoscenza oggettiva</h2>
-          <p>
-            Per ognuno, indica se pensi che contenga <strong>più, uguale o meno</strong> zucchero rispetto alla{' '}
-            <strong>{referenceFood.emoji} {getFoodName(referenceFood)}</strong>:
+          <p style={{ marginBottom: '24px' }}>
+            Per ogni coppia di alimenti, indica quale pensi contenga <strong>più zucchero</strong>:
           </p>
 
-          {foods.map(food => (
-            <div key={food.id} className="food-item">
-              <div className="food-header">
-                <span className="food-emoji">{food.emoji}</span>
-                <span className="food-name">{getFoodName(food)}</span>
+          {pairs.map((pair, index) => (
+            <div key={pair.id} className="food-item">
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                marginBottom: '16px',
+                padding: '16px',
+                background: '#f3f4f6',
+                borderRadius: '10px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <span style={{ fontSize: '2rem' }}>{pair.foodA?.emoji}</span>
+                  <span style={{ fontSize: '1.125rem', fontWeight: '600' }}>
+                    {getFoodName(pair.foodA)}
+                  </span>
+                </div>
+                
+                <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#667eea' }}>
+                  VS
+                </span>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, justifyContent: 'flex-end' }}>
+                  <span style={{ fontSize: '1.125rem', fontWeight: '600' }}>
+                    {getFoodName(pair.foodB)}
+                  </span>
+                  <span style={{ fontSize: '2rem' }}>{pair.foodB?.emoji}</span>
+                </div>
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Rispetto alla {getFoodName(referenceFood)}:</label>
-                <div className="radio-group">
-                  <label 
-                    className={`radio-option ${responses[food.id] === 'more' ? 'selected' : ''}`}
-                    onClick={() => handleComparisonSelect(food.id, 'more')}
-                  >
-                    <input
-                      type="radio"
-                      name={`comparison-${food.id}`}
-                      value="more"
-                      checked={responses[food.id] === 'more'}
-                      onChange={() => {}}
-                    />
-                    {i18n.language === 'it' ? 'Più zucchero' : 'More sugar'}
-                  </label>
-                  <label 
-                    className={`radio-option ${responses[food.id] === 'equal' ? 'selected' : ''}`}
-                    onClick={() => handleComparisonSelect(food.id, 'equal')}
-                  >
-                    <input
-                      type="radio"
-                      name={`comparison-${food.id}`}
-                      value="equal"
-                      checked={responses[food.id] === 'equal'}
-                      onChange={() => {}}
-                    />
-                    {i18n.language === 'it' ? 'Uguale' : 'Equal'}
-                  </label>
-                  <label 
-                    className={`radio-option ${responses[food.id] === 'less' ? 'selected' : ''}`}
-                    onClick={() => handleComparisonSelect(food.id, 'less')}
-                  >
-                    <input
-                      type="radio"
-                      name={`comparison-${food.id}`}
-                      value="less"
-                      checked={responses[food.id] === 'less'}
-                      onChange={() => {}}
-                    />
-                    {i18n.language === 'it' ? 'Meno zucchero' : 'Less sugar'}
-                  </label>
-                </div>
+              <div className="radio-group" style={{ display: 'flex', gap: '8px' }}>
+                <label className={`radio-option ${responses[pair.id] === 'a_more' ? 'selected' : ''}`} style={{ flex: 1 }}>
+                  <input
+                    type="radio"
+                    name={`comparison_${pair.id}`}
+                    value="a_more"
+                    checked={responses[pair.id] === 'a_more'}
+                    onChange={(e) => handleComparisonSelect(pair.id, e.target.value)}
+                  />
+                  {pair.foodA?.emoji} Più zucchero
+                </label>
+                
+                <label className={`radio-option ${responses[pair.id] === 'equal' ? 'selected' : ''}`} style={{ flex: 1 }}>
+                  <input
+                    type="radio"
+                    name={`comparison_${pair.id}`}
+                    value="equal"
+                    checked={responses[pair.id] === 'equal'}
+                    onChange={(e) => handleComparisonSelect(pair.id, e.target.value)}
+                  />
+                  Uguale
+                </label>
+                
+                <label className={`radio-option ${responses[pair.id] === 'b_more' ? 'selected' : ''}`} style={{ flex: 1 }}>
+                  <input
+                    type="radio"
+                    name={`comparison_${pair.id}`}
+                    value="b_more"
+                    checked={responses[pair.id] === 'b_more'}
+                    onChange={(e) => handleComparisonSelect(pair.id, e.target.value)}
+                  />
+                  {pair.foodB?.emoji} Più zucchero
+                </label>
               </div>
             </div>
           ))}
 
-          <button className="btn btn-primary" onClick={handleSubmit}>
+          <button 
+            className="btn btn-primary" 
+            onClick={handleSubmit}
+            disabled={!pairs.every(pair => responses[pair.id] !== null)}
+          >
             {t('common.next')}
           </button>
         </div>
