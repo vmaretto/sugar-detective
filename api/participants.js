@@ -1,4 +1,4 @@
-// api/participants.js - Compatible with Neon/Standard Postgres
+// api/participants.js - FIXED VERSION
 import { Pool } from 'pg';
 
 // Create connection pool
@@ -30,17 +30,25 @@ export default async function handler(req, res) {
 
     // POST - Create new participant
     if (req.method === 'POST') {
-      const { language, data } = req.body;
+      const payload = req.body;
 
-      if (!language || !data) {
+      // Extract language from payload
+      const language = payload.language;
+
+      if (!language) {
         return res.status(400).json({ 
-          error: 'Missing required fields: language and data' 
+          error: 'Missing required field: language' 
         });
       }
 
+      // The entire payload becomes the data
+      // Remove language from data since we store it separately
+      const { language: _, ...dataWithoutLanguage } = payload;
+      
+      // Store the entire payload as JSON data
       const result = await pool.query(
         'INSERT INTO participants (language, data) VALUES ($1, $2) RETURNING *',
-        [language, JSON.stringify(data)]
+        [language, JSON.stringify(dataWithoutLanguage)]
       );
 
       return res.status(201).json(result.rows[0]);
