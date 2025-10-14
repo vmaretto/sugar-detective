@@ -1,7 +1,6 @@
-// api/participants.js - FIXED VERSION
+// api/participants.js - FIXED TIMESTAMP VERSION
 import { Pool } from 'pg';
 
-// Create connection pool
 const pool = new Pool({
   connectionString: process.env.POSTGRES_URL || process.env.DATABASE_URL,
   ssl: {
@@ -10,7 +9,7 @@ const pool = new Pool({
 });
 
 export default async function handler(req, res) {
-  // Enable CORS
+  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -20,7 +19,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // GET - Fetch all participants
+    // GET
     if (req.method === 'GET') {
       const result = await pool.query(
         'SELECT * FROM participants ORDER BY timestamp DESC'
@@ -28,46 +27,53 @@ export default async function handler(req, res) {
       return res.status(200).json(result.rows);
     }
 
-    // POST - Create new participant
+    // POST
     if (req.method === 'POST') {
-      const payload = req.body;
-
-      // Extract language from payload
-      const language = payload.language;
-
-      if (!language) {
-        return res.status(400).json({ 
-          error: 'Missing required field: language' 
-        });
-      }
-
-      // The entire payload becomes the data
-      // Remove language from data since we store it separately
-      const { language: _, ...dataWithoutLanguage } = payload;
+      const body = req.body;
       
-      // Store the entire payload as JSON data
+      console.log('Received payload');
+      
+      // Estrai language
+      const language = body.language || 'it';
+      
+      // Rimuovi il campo timestamp dal payload se esiste
+      // perché la colonna timestamp del DB si auto-genera
+      const { timestamp, ...dataWithoutTimestamp } = body;
+      
+      console.log('Language:', language);
+      
+      // Insert nel database - il timestamp si genera automaticamente
       const result = await pool.query(
         'INSERT INTO participants (language, data) VALUES ($1, $2) RETURNING *',
-        [language, JSON.stringify(dataWithoutLanguage)]
+        [language, dataWithoutTimestamp]
       );
 
-      return res.status(201).json(result.rows[0]);
+      console.log('Successfully saved participant ID:', result.rows[0].id);
+      
+      return res.status(201).json({
+        success: true,
+        id: result.rows[0].id,
+        timestamp: result.rows[0].timestamp
+      });
     }
 
-    // DELETE - Delete all participants (admin only)
+    // DELETE
     if (req.method === 'DELETE') {
       await pool.query('DELETE FROM participants');
       return res.status(200).json({ 
-        message: 'All participants deleted successfully' 
+        message: 'All participants deleted' 
       });
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
+    
   } catch (error) {
-    console.error('Database error:', error);
+    console.error('API Error:', error.message);
+    console.error('Error details:', error);
+    
     return res.status(500).json({ 
       error: 'Database operation failed',
-      details: error.message 
+      message: error.message
     });
   }
 }
