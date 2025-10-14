@@ -28,7 +28,7 @@ const ResultsScreen = () => {
     measurements: surveyData.measurements,
     foods: foods,
     pairs: comparisonPairs
-  }) : { totalScore: 0, knowledgeScore: 0, awarenessScore: 0, pairsScore: 0 };
+  }) : { totalScore: 0, knowledgeScore: 0, awarenessScore: 0 };
 
   const handleDownloadImage = async () => {
     if (!resultsRef.current) return;
@@ -104,7 +104,7 @@ const ResultsScreen = () => {
             </p>
           </div>
 
-          {/* Personal Scores */}
+          {/* Personal Scores - SOLO 3 PUNTEGGI */}
           <div style={{
             background: '#f9fafb',
             borderRadius: '20px',
@@ -119,14 +119,15 @@ const ResultsScreen = () => {
               marginBottom: '1.5rem',
               textAlign: 'center'
             }}>
-              I tuoi punteggi
+              {language === 'it' ? 'I tuoi punteggi' : 'Your scores'}
             </h2>
             
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
               gap: '1.5rem'
             }}>
+              {/* Punteggio Totale */}
               <div style={{
                 padding: '1.5rem',
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -136,7 +137,7 @@ const ResultsScreen = () => {
                 boxShadow: '0 8px 20px rgba(102, 126, 234, 0.3)'
               }}>
                 <div style={{ fontSize: '0.875rem', opacity: 0.9, marginBottom: '0.5rem' }}>
-                  Punteggio Totale
+                  {i18n.language === 'it' ? 'Punteggio Totale' : 'Total Score'}
                 </div>
                 <div style={{ fontSize: '3rem', fontWeight: 'bold' }}>
                   {personalScores.totalScore}
@@ -146,6 +147,7 @@ const ResultsScreen = () => {
                 </div>
               </div>
               
+              {/* Conoscenza (Stime + Coppie) */}
               <div style={{
                 padding: '1.5rem',
                 background: 'white',
@@ -155,7 +157,7 @@ const ResultsScreen = () => {
                 boxShadow: '0 4px 12px rgba(16, 185, 129, 0.1)'
               }}>
                 <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
-                  Conoscenza
+                  {i18n.language === 'it' ? 'Conoscenza' : 'Knowledge'}
                 </div>
                 <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981' }}>
                   {personalScores.knowledgeScore}
@@ -163,8 +165,12 @@ const ResultsScreen = () => {
                 <div style={{ fontSize: '0.875rem', color: '#666' }}>
                   / 100
                 </div>
+                <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.5rem', fontStyle: 'italic' }}>
+                  {i18n.language === 'it' ? '(Stime + Coppie)' : '(Estimates + Pairs)'}
+                </div>
               </div>
               
+              {/* Consapevolezza */}
               <div style={{
                 padding: '1.5rem',
                 background: 'white',
@@ -174,7 +180,7 @@ const ResultsScreen = () => {
                 boxShadow: '0 4px 12px rgba(245, 158, 11, 0.1)'
               }}>
                 <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
-                  Consapevolezza
+                  {i18n.language === 'it' ? 'Consapevolezza' : 'Awareness'}
                 </div>
                 <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f59e0b' }}>
                   {personalScores.awarenessScore}
@@ -183,24 +189,32 @@ const ResultsScreen = () => {
                   / 100
                 </div>
               </div>
-              
-              <div style={{
-                padding: '1.5rem',
-                background: 'white',
-                border: '2px solid #8b5cf6',
-                borderRadius: '15px',
-                textAlign: 'center',
-                boxShadow: '0 4px 12px rgba(139, 92, 246, 0.1)'
-              }}>
-                <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
-                  Coppie
-                </div>
-                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#8b5cf6' }}>
-                  {personalScores.pairsScore}
-                </div>
-                <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                  / 100
-                </div>
+            </div>
+
+            {/* Spiegazione algoritmo */}
+            <div style={{
+              marginTop: '1.5rem',
+              padding: '1rem',
+              background: 'white',
+              borderRadius: '10px',
+              border: '2px solid #e5e7eb'
+            }}>
+              <div style={{ fontSize: '0.875rem', color: '#666', lineHeight: '1.6' }}>
+                <strong style={{ color: '#667eea' }}>
+                  {i18n.language === 'it' ? '📊 Come calcoliamo il punteggio:' : '📊 How we calculate the score:'}
+                </strong>
+                <br />
+                {i18n.language === 'it' ? (
+                  <>
+                    • <strong>Conoscenza (70%):</strong> 60% precisione stime + 40% coppie corrette<br />
+                    • <strong>Consapevolezza (30%):</strong> Quanto conosci i tuoi limiti
+                  </>
+                ) : (
+                  <>
+                    • <strong>Knowledge (70%):</strong> 60% estimates accuracy + 40% correct pairs<br />
+                    • <strong>Awareness (30%):</strong> How well you know your limits
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -215,7 +229,7 @@ const ResultsScreen = () => {
             />
           )}
 
-          {/* Pairs Comparison */}
+          {/* Pairs Comparison - VERSIONE COMPATTA */}
           {comparisonPairs.length > 0 && (
             <PairsComparison
               pairs={comparisonPairs}
@@ -273,7 +287,7 @@ const ResultsScreen = () => {
                 color: '#667eea',
                 marginBottom: '1rem'
               }}>
-                Le tue misurazioni
+                {i18n.language === 'it' ? 'Le tue misurazioni' : 'Your measurements'}
               </h3>
               <div style={{
                 display: 'grid',
@@ -282,7 +296,7 @@ const ResultsScreen = () => {
               }}>
                 {Object.entries(measurements).map(([foodId, value]) => {
                   const { brix, glucose } = value || {};
-                  const food = foods.find(f => f.id === foodId);
+                  const food = foods.find(f => f.id === parseInt(foodId));
                   const foodName = food ? (i18n.language === 'it' ? food.name_it : food.name_en) : foodId;
                   const emoji = food ? food.emoji : '🍎';
 
@@ -306,7 +320,9 @@ const ResultsScreen = () => {
                         <span style={{ fontWeight: 600 }}>°Bx:</span> {brix ?? 'N/A'}
                       </div>
                       <div style={{ fontSize: '0.875rem', color: '#111' }}>
-                        <span style={{ fontWeight: 600 }}>Glucosio:</span> {glucose ?? 'N/A'}
+                        <span style={{ fontWeight: 600 }}>
+                          {i18n.language === 'it' ? 'Glucosio:' : 'Glucose:'}
+                        </span> {glucose ?? 'N/A'}
                       </div>
                     </div>
                   );
@@ -316,31 +332,30 @@ const ResultsScreen = () => {
           )}
 
           {/* Thank You Message */}
-<div style={{
-  background: '#f9fafb',
-  border: '2px solid #667eea',
-  borderRadius: '15px',
-  padding: '2rem',
-  textAlign: 'center'
-}}>
-  <h3 style={{ 
-    fontSize: '1.5rem', 
-    fontWeight: 'bold', 
-    marginBottom: '0.5rem',
-    color: '#667eea'
-  }}>
-    {t('results.thankYou')}
-  </h3>
-  <p style={{ 
-    color: '#666',
-    fontSize: '1.125rem',
-    lineHeight: '1.6',
-    margin: 0
-  }}>
-    {t('results.dataContribution')}
-  </p>
-</div>
-
+          <div style={{
+            background: '#f9fafb',
+            border: '2px solid #667eea',
+            borderRadius: '15px',
+            padding: '2rem',
+            textAlign: 'center'
+          }}>
+            <h3 style={{ 
+              fontSize: '1.5rem', 
+              fontWeight: 'bold', 
+              marginBottom: '0.5rem',
+              color: '#667eea'
+            }}>
+              {t('results.thankYou')}
+            </h3>
+            <p style={{ 
+              color: '#666',
+              fontSize: '1.125rem',
+              lineHeight: '1.6',
+              margin: 0
+            }}>
+              {t('results.dataContribution')}
+            </p>
+          </div>
 
           {/* Footer */}
           <div style={{

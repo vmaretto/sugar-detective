@@ -1,9 +1,11 @@
-// src/components/PairsComparison.js
-import React from 'react';
-import { CheckCircle, XCircle } from 'lucide-react';
+// src/components/PairsComparison.js - VERSIONE COMPATTA
+import React, { useState } from 'react';
+import { CheckCircle, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { compareFoods, isPairAnswerCorrect } from '../utils/sugarUtils';
 
 const PairsComparison = ({ pairs, foods, measurements, part3Data, language }) => {
+  const [showAll, setShowAll] = useState(false);
+  
   const getFoodName = (food) => {
     if (!food) return '';
     return language === 'it' ? food.name_it : food.name_en;
@@ -51,25 +53,23 @@ const PairsComparison = ({ pairs, foods, measurements, part3Data, language }) =>
 
   const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(0) : 0;
 
-  const getUserAnswerText = (answer, foodA, foodB) => {
-    if (answer === 'a_more') {
+  const getUserAnswerIcon = (isCorrect) => {
+    return isCorrect ? <CheckCircle size={20} color="#10b981" /> : <XCircle size={20} color="#ef4444" />;
+  };
+
+  const getRealityText = (reality, foodA, foodB) => {
+    if (reality === 'a') {
       return `${getFoodName(foodA)} ${language === 'it' ? 'più dolce' : 'sweeter'}`;
-    } else if (answer === 'b_more') {
+    } else if (reality === 'b') {
       return `${getFoodName(foodB)} ${language === 'it' ? 'più dolce' : 'sweeter'}`;
     } else {
-      return language === 'it' ? 'Uguale dolcezza' : 'Equal sweetness';
+      return language === 'it' ? 'Uguale' : 'Equal';
     }
   };
 
-  const getRealityText = (reality, foodA, foodB, brixA, brixB) => {
-    if (reality === 'a') {
-      return `${getFoodName(foodA)} ${language === 'it' ? 'più dolce' : 'sweeter'} (${brixA}°Bx vs ${brixB}°Bx)`;
-    } else if (reality === 'b') {
-      return `${getFoodName(foodB)} ${language === 'it' ? 'più dolce' : 'sweeter'} (${brixB}°Bx vs ${brixA}°Bx)`;
-    } else {
-      return `${language === 'it' ? 'Uguale dolcezza' : 'Equal sweetness'} (${brixA}°Bx ≈ ${brixB}°Bx)`;
-    }
-  };
+  // Determina quante coppie mostrare
+  const displayedPairs = showAll ? pairResults : pairResults.slice(0, 6);
+  const hasMore = pairResults.length > 6;
 
   return (
     <div style={{
@@ -122,105 +122,123 @@ const PairsComparison = ({ pairs, foods, measurements, part3Data, language }) =>
         </div>
       </div>
 
-      {/* Pair Results */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        {pairResults.map((result, index) => (
+      {/* Pair Results - GRIGLIA COMPATTA */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+        gap: '1rem',
+        marginBottom: hasMore ? '1.5rem' : '0'
+      }}>
+        {displayedPairs.map((result) => (
           <div
             key={result.pairId}
             style={{
-              padding: '1.5rem',
+              padding: '1rem',
               border: `2px solid ${result.isCorrect ? '#10b981' : '#ef4444'}`,
-              borderRadius: '15px',
+              borderRadius: '12px',
               background: result.isCorrect ? '#10b98108' : '#ef444408'
             }}
           >
-            {/* Header with result */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1rem',
-              marginBottom: '1rem'
-            }}>
-              {result.isCorrect ? (
-                <CheckCircle size={32} color="#10b981" />
-              ) : (
-                <XCircle size={32} color="#ef4444" />
-              )}
-              <div style={{
-                fontSize: '1.25rem',
-                fontWeight: 'bold',
-                color: result.isCorrect ? '#10b981' : '#ef4444'
-              }}>
-                {result.isCorrect
-                  ? (language === 'it' ? 'Corretto!' : 'Correct!')
-                  : (language === 'it' ? 'Non corretto' : 'Incorrect')}
-              </div>
-            </div>
-
-            {/* Pair display */}
+            {/* Header compatto con risultato */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              marginBottom: '1rem',
-              padding: '1rem',
-              background: 'white',
-              borderRadius: '10px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{ fontSize: '2rem' }}>{result.foodA.emoji}</span>
-                <span style={{ fontSize: '1.125rem', fontWeight: '600' }}>
-                  {getFoodName(result.foodA)}
-                </span>
-              </div>
-              
-              <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#667eea' }}>
-                VS
-              </span>
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{ fontSize: '1.125rem', fontWeight: '600' }}>
-                  {getFoodName(result.foodB)}
-                </span>
-                <span style={{ fontSize: '2rem' }}>{result.foodB.emoji}</span>
-              </div>
-            </div>
-
-            {/* Your answer */}
-            <div style={{
-              padding: '1rem',
-              background: 'white',
-              borderRadius: '10px',
               marginBottom: '0.75rem'
             }}>
-              <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
-                {language === 'it' ? 'La tua risposta:' : 'Your answer:'}
-              </div>
-              <div style={{ fontSize: '1.125rem', fontWeight: '600', color: '#667eea' }}>
-                {getUserAnswerText(result.userAnswer, result.foodA, result.foodB)}
+              {getUserAnswerIcon(result.isCorrect)}
+              <div style={{
+                fontSize: '0.875rem',
+                fontWeight: 'bold',
+                color: result.isCorrect ? '#10b981' : '#ef4444'
+              }}>
+                {result.isCorrect
+                  ? (language === 'it' ? 'Corretto' : 'Correct')
+                  : (language === 'it' ? 'Errato' : 'Wrong')}
               </div>
             </div>
 
-            {/* Reality */}
+            {/* Coppia compatta */}
             <div style={{
-              padding: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '0.75rem',
+              padding: '0.5rem',
               background: 'white',
-              borderRadius: '10px'
+              borderRadius: '8px',
+              fontSize: '0.875rem'
             }}>
-              <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
+              <span>{result.foodA.emoji} {getFoodName(result.foodA)}</span>
+              <span style={{ fontWeight: 'bold', color: '#667eea' }}>vs</span>
+              <span>{result.foodB.emoji} {getFoodName(result.foodB)}</span>
+            </div>
+
+            {/* Realtà */}
+            <div style={{
+              padding: '0.5rem',
+              background: 'white',
+              borderRadius: '8px',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.25rem' }}>
                 {language === 'it' ? 'Realtà:' : 'Reality:'}
               </div>
               <div style={{
-                fontSize: '1.125rem',
+                fontSize: '0.875rem',
                 fontWeight: '600',
                 color: result.isCorrect ? '#10b981' : '#ef4444'
               }}>
-                {getRealityText(result.reality, result.foodA, result.foodB, result.brixA, result.brixB)}
+                {getRealityText(result.reality, result.foodA, result.foodB)}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.25rem' }}>
+                {result.brixA}°Bx vs {result.brixB}°Bx
               </div>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Pulsante Mostra tutte / Mostra meno */}
+      {hasMore && (
+        <div style={{ textAlign: 'center' }}>
+          <button
+            onClick={() => setShowAll(!showAll)}
+            style={{
+              padding: '0.75rem 1.5rem',
+              background: '#667eea',
+              color: 'white',
+              border: 'none',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              fontWeight: '600',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#5568d3';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#667eea';
+            }}
+          >
+            {showAll ? (
+              <>
+                {language === 'it' ? 'Mostra meno' : 'Show less'}
+                <ChevronUp size={20} />
+              </>
+            ) : (
+              <>
+                {language === 'it' ? `Mostra tutte (${pairResults.length})` : `Show all (${pairResults.length})`}
+                <ChevronDown size={20} />
+              </>
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

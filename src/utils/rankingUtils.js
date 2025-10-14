@@ -4,33 +4,41 @@ import { comparePerceptionVsReality, compareFoods, isPairAnswerCorrect } from '.
 
 /**
  * Calcola il punteggio totale di un partecipante
- * Basato su 3 componenti:
- * 1. Knowledge Score (0-100): Precisione delle stime di dolcezza
+ * Basato su 2 componenti:
+ * 1. Knowledge Score (0-100): Combinazione di stime (60%) + coppie (40%)
  * 2. Awareness Score (0-100): Consapevolezza dei propri errori
- * 3. Pairs Accuracy (0-100): Correttezza delle comparazioni a coppie
  * 
- * Formula finale: (Knowledge * 0.4) + (Awareness * 0.3) + (Pairs * 0.3)
+ * Formula finale: (Knowledge * 0.7) + (Awareness * 0.3)
  */
 export const calculateTotalScore = (participantData) => {
-  const knowledgeScore = calculateKnowledgeScore(participantData);
-  const awarenessScore = calculateAwarenessScore(participantData);
+  // Calcolo punteggio stime (0-100)
+  const estimatesScore = calculateEstimatesScore(participantData);
+  
+  // Calcolo punteggio coppie (0-100)
   const pairsScore = calculatePairsScore(participantData);
   
-  const totalScore = (knowledgeScore * 0.4) + (awarenessScore * 0.3) + (pairsScore * 0.3);
+  // Calcolo punteggio conoscenza (0-100): 60% stime + 40% coppie
+  const knowledgeScore = (estimatesScore * 0.6) + (pairsScore * 0.4);
+  
+  // Calcolo punteggio consapevolezza (0-100)
+  const awarenessScore = calculateAwarenessScore(participantData);
+  
+  // Punteggio totale: 70% conoscenza + 30% consapevolezza
+  const totalScore = (knowledgeScore * 0.7) + (awarenessScore * 0.3);
   
   return {
     totalScore: parseFloat(totalScore.toFixed(1)),
     knowledgeScore: parseFloat(knowledgeScore.toFixed(1)),
-    awarenessScore: parseFloat(awarenessScore.toFixed(1)),
-    pairsScore: parseFloat(pairsScore.toFixed(1))
+    awarenessScore: parseFloat(awarenessScore.toFixed(1))
+    // Non restituiamo più pairsScore separato
   };
 };
 
 /**
- * Knowledge Score: Quanto precise sono le tue stime di dolcezza
+ * Estimates Score: Quanto precise sono le tue stime di dolcezza
  * Più sei vicino alla realtà, più punti ottieni
  */
-export const calculateKnowledgeScore = (participantData) => {
+export const calculateEstimatesScore = (participantData) => {
   const { part2_data, measurements, foods } = participantData;
   
   if (!part2_data || !measurements || !foods) return 0;
@@ -73,7 +81,6 @@ export const calculateKnowledgeScore = (participantData) => {
   const avgError = totalError / count;
   
   // Converti errore in score: errore 0 = 100, errore 5+ = 0
-  // Formula: max(0, 100 - (avgError * 20))
   const score = Math.max(0, Math.min(100, 100 - (avgError * 20)));
   
   return score;
@@ -227,7 +234,7 @@ export const getRankingStats = (ranking) => {
 
 export default {
   calculateTotalScore,
-  calculateKnowledgeScore,
+  calculateEstimatesScore,
   calculateAwarenessScore,
   calculatePairsScore,
   generateRanking,
