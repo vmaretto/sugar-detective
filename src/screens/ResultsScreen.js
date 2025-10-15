@@ -273,7 +273,7 @@ const ResultsScreen = () => {
             </div>
           </div>
 
-          {/* Your Measurements */}
+          {/* Your Measurements con confronto previsioni */}
           {Object.keys(measurements).length > 0 && (
             <div style={{
               background: '#f3f4f6',
@@ -291,38 +291,116 @@ const ResultsScreen = () => {
               </h3>
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                gap: '0.75rem'
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '1rem'
               }}>
                 {Object.entries(measurements).map(([foodId, value]) => {
                   const { brix, glucose } = value || {};
                   const food = foods.find(f => f.id === parseInt(foodId));
                   const foodName = food ? (i18n.language === 'it' ? food.name_it : food.name_en) : foodId;
                   const emoji = food ? food.emoji : '🍎';
+                  
+                  // Get user's prediction from part2
+                  const part2 = surveyData.part2 || {};
+                  const userPrediction = part2[foodId] || part2.responses?.[foodId];
+                  
+                  // Calculate real sweetness from brix
+                  const realSweetness = brix ? (brix / 2.5).toFixed(1) : null; // Rough conversion
+                  
+                  // Determine if prediction was accurate
+                  let predictionStatus = null;
+                  let statusColor = '#9ca3af';
+                  let statusText = '';
+                  
+                  if (userPrediction && realSweetness) {
+                    const diff = Math.abs(userPrediction - realSweetness);
+                    if (diff <= 0.5) {
+                      predictionStatus = 'accurate';
+                      statusColor = '#10b981';
+                      statusText = i18n.language === 'it' ? '✓ Preciso!' : '✓ Accurate!';
+                    } else if (userPrediction < realSweetness) {
+                      predictionStatus = 'underestimated';
+                      statusColor = '#f59e0b';
+                      statusText = i18n.language === 'it' ? '↓ Sottostimato' : '↓ Underestimated';
+                    } else {
+                      predictionStatus = 'overestimated';
+                      statusColor = '#ef4444';
+                      statusText = i18n.language === 'it' ? '↑ Sovrastimato' : '↑ Overestimated';
+                    }
+                  }
 
                   return (
                     <div
                       key={foodId}
                       style={{
                         background: 'white',
-                        padding: '0.75rem',
+                        padding: '1rem',
                         borderRadius: '10px',
-                        textAlign: 'center'
+                        border: predictionStatus ? `2px solid ${statusColor}` : '2px solid #e5e7eb'
                       }}
                     >
-                      <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>
-                        {emoji}
+                      {/* Header con emoji e nome */}
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between',
+                        marginBottom: '0.75rem'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '1.5rem' }}>{emoji}</span>
+                          <span style={{ fontWeight: 'bold', color: '#667eea', fontSize: '0.875rem' }}>
+                            {foodName}
+                          </span>
+                        </div>
+                        {predictionStatus && (
+                          <span style={{ 
+                            fontSize: '0.75rem', 
+                            fontWeight: '600',
+                            color: statusColor
+                          }}>
+                            {statusText}
+                          </span>
+                        )}
                       </div>
-                      <div style={{ fontWeight: 'bold', color: '#667eea', marginBottom: '0.25rem', fontSize: '0.875rem' }}>
-                        {foodName}
-                      </div>
-                      <div style={{ fontSize: '0.875rem', color: '#111', marginBottom: '0.25rem' }}>
-                        <span style={{ fontWeight: 600 }}>°Bx:</span> {brix ?? 'N/A'}
-                      </div>
+                      
+                      {/* Confronto Previsione vs Realtà */}
+                      {userPrediction && (
+                        <div style={{
+                          background: '#f9fafb',
+                          padding: '0.5rem',
+                          borderRadius: '6px',
+                          marginBottom: '0.5rem',
+                          fontSize: '0.75rem'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                            <span style={{ color: '#666' }}>
+                              {i18n.language === 'it' ? 'La tua stima:' : 'Your estimate:'}
+                            </span>
+                            <span style={{ fontWeight: '600', color: '#667eea' }}>
+                              {userPrediction}/5
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: '#666' }}>
+                              {i18n.language === 'it' ? 'Realtà:' : 'Reality:'}
+                            </span>
+                            <span style={{ fontWeight: '600', color: '#10b981' }}>
+                              {realSweetness}/5
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Misurazioni */}
                       <div style={{ fontSize: '0.875rem', color: '#111' }}>
-                        <span style={{ fontWeight: 600 }}>
-                          {i18n.language === 'it' ? 'Glucosio:' : 'Glucose:'}
-                        </span> {glucose ?? 'N/A'}
+                        <div style={{ marginBottom: '0.25rem' }}>
+                          <span style={{ fontWeight: 600 }}>°Bx:</span> {brix ?? 'N/A'}
+                        </div>
+                        <div>
+                          <span style={{ fontWeight: 600 }}>
+                            {i18n.language === 'it' ? 'Glucosio:' : 'Glucose:'}
+                          </span> {glucose ?? 'N/A'} g/100g
+                        </div>
                       </div>
                     </div>
                   );
