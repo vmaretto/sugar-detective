@@ -119,7 +119,7 @@ const ResultsScreen = () => {
               marginBottom: '1.5rem',
               textAlign: 'center'
             }}>
-              {language === 'it' ? 'I tuoi punteggi' : 'Your scores'}
+              {i18n.language === 'it' ? 'I tuoi punteggi' : 'Your scores'}
             </h2>
             
             <div style={{
