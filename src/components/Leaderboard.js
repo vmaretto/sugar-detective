@@ -35,6 +35,17 @@ const Leaderboard = ({ ranking, language = 'it' }) => {
     return participant.profile || {};
   };
 
+  const getDisplayName = (participant) => {
+    // Priority: nickname > "Partecipante #ID"
+    const data = participant.participant?.data || participant.data || {};
+    
+    if (data.nickname && data.nickname.trim()) {
+      return data.nickname.trim();
+    }
+    
+    return `${language === 'it' ? 'Partecipante' : 'Participant'} #${participant.id}`;
+  };
+
   return (
     <div style={{
       background: 'white',
@@ -69,6 +80,7 @@ const Leaderboard = ({ ranking, language = 'it' }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {ranking.map((participant, index) => {
             const profile = getProfile(participant);
+            const displayName = getDisplayName(participant);
             
             return (
               <div
@@ -119,7 +131,7 @@ const Leaderboard = ({ ranking, language = 'it' }) => {
                     color: '#1f2937',
                     marginBottom: '0.25rem'
                   }}>
-                    {language === 'it' ? 'Partecipante' : 'Participant'} #{participant.id}
+                    {displayName}
                   </div>
                   <div style={{
                     fontSize: '0.875rem',

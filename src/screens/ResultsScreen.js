@@ -13,6 +13,11 @@ const ResultsScreen = () => {
   const location = useLocation();
   const resultsRef = useRef(null);
   const [downloading, setDownloading] = useState(false);
+  const [nickname, setNickname] = useState('');
+  const [showNicknameInput, setShowNicknameInput] = useState(false);
+  const [rankingPosition, setRankingPosition] = useState(null);
+  const [totalParticipants, setTotalParticipants] = useState(0);
+  const [savingNickname, setSavingNickname] = useState(false);
 
   const surveyData = location.state?.surveyData || {};
 
@@ -29,6 +34,92 @@ const ResultsScreen = () => {
     foods: foods,
     pairs: comparisonPairs
   }) : { totalScore: 0, knowledgeScore: 0, awarenessScore: 0 };
+
+  // Fetch ranking position when component mounts
+  React.useEffect(() => {
+    fetchRankingPosition();
+  }, []);
+
+  const fetchRankingPosition = async () => {
+    try {
+      const response = await fetch('/api/participants');
+      if (!response.ok) return;
+      
+      const participants = await response.json();
+      setTotalParticipants(participants.length);
+      
+      // Calculate ranks for all participants
+      const ranked = participants.map(p => {
+        const scores = calculateTotalScore({
+          part2_data: p.data?.part2,
+          part3_data: p.data?.part3,
+          part4_awareness: p.data?.part4_awareness || p.data?.part4,
+          measurements: p.data?.measurements,
+          foods: p.data?.foods,
+          pairs: p.data?.comparison_pairs
+        });
+        return {
+          id: p.id,
+          timestamp: p.timestamp,
+          totalScore: scores.totalScore
+        };
+      });
+      
+      // Sort by score descending
+      ranked.sort((a, b) => b.totalScore - a.totalScore);
+      
+      // Find current participant's position
+      const myTimestamp = surveyData.timestamp;
+      const myPosition = ranked.findIndex(p => p.timestamp === myTimestamp);
+      
+      if (myPosition >= 0) {
+        setRankingPosition(myPosition + 1);
+      }
+    } catch (error) {
+      console.error('Error fetching ranking:', error);
+    }
+  };
+
+  const handleSaveNickname = async () => {
+    if (!nickname.trim()) {
+      alert(i18n.language === 'it' ? 'Inserisci un nickname!' : 'Enter a nickname!');
+      return;
+    }
+
+    setSavingNickname(true);
+    try {
+      // Update participant with nickname
+      const participantId = surveyData.id;
+      
+      // Re-save participant data with nickname
+      const updatedData = {
+        ...surveyData,
+        nickname: nickname.trim()
+      };
+      
+      const response = await fetch('/api/participants', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedData)
+      });
+
+      if (response.ok) {
+        alert(i18n.language === 'it' 
+          ? '✓ Nickname salvato! Ora apparirai nella classifica.' 
+          : '✓ Nickname saved! You will now appear in the leaderboard.');
+        setShowNicknameInput(false);
+      } else {
+        alert(i18n.language === 'it' ? 'Errore nel salvataggio' : 'Error saving nickname');
+      }
+    } catch (error) {
+      console.error('Error saving nickname:', error);
+      alert(i18n.language === 'it' ? 'Errore di rete' : 'Network error');
+    } finally {
+      setSavingNickname(false);
+    }
+  };
 
   const handleDownloadImage = async () => {
     if (!resultsRef.current) return;
@@ -218,6 +309,153 @@ const ResultsScreen = () => {
               </div>
             </div>
           </div>
+
+          {/* Ranking Position Card */}
+          {rankingPosition && (
+            <div style={{
+              background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+              borderRadius: '20px',
+              padding: '2rem',
+              marginBottom: '2rem',
+              color: 'white',
+              textAlign: 'center',
+              boxShadow: '0 10px 30px rgba(251, 191, 36, 0.3)'
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>
+                {rankingPosition === 1 ? '🥇' : rankingPosition === 2 ? '🥈' : rankingPosition === 3 ? '🥉' : '🏆'}
+              </div>
+              <h2 style={{ 
+                fontSize: '2rem', 
+                fontWeight: 'bold', 
+                marginBottom: '0.5rem',
+                textShadow: '0 2px 4px rgba(0,0,0,0.1)' 
+              }}>
+                {i18n.language === 'it' 
+                  ? `${rankingPosition}° posto su ${totalParticipants}!` 
+                  : `${rankingPosition}${rankingPosition === 1 ? 'st' : rankingPosition === 2 ? 'nd' : rankingPosition === 3 ? 'rd' : 'th'} place out of ${totalParticipants}!`}
+              </h2>
+              
+              {/* Nickname Section */}
+              {!showNicknameInput ? (
+                <div>
+                  <p style={{ 
+                    fontSize: '1rem', 
+                    opacity: 0.9,
+                    marginBottom: '1rem' 
+                  }}>
+                    {i18n.language === 'it' 
+                      ? 'Vuoi apparire nella classifica pubblica?' 
+                      : 'Want to appear on the public leaderboard?'}
+                  </p>
+                  <button
+                    onClick={() => setShowNicknameInput(true)}
+                    style={{
+                      padding: '0.75rem 2rem',
+                      background: 'white',
+                      color: '#f59e0b',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      transition: 'transform 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                  >
+                    {i18n.language === 'it' ? '✨ Aggiungi Nickname' : '✨ Add Nickname'}
+                  </button>
+                </div>
+              ) : (
+                <div style={{ 
+                  background: 'rgba(255,255,255,0.2)',
+                  borderRadius: '12px',
+                  padding: '1.5rem',
+                  backdropFilter: 'blur(10px)'
+                }}>
+                  <p style={{ 
+                    fontSize: '0.875rem', 
+                    marginBottom: '1rem',
+                    opacity: 0.9 
+                  }}>
+                    {i18n.language === 'it' 
+                      ? 'Scegli come vuoi apparire nella classifica:' 
+                      : 'Choose how you want to appear on the leaderboard:'}
+                  </p>
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: '0.75rem',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexWrap: 'wrap'
+                  }}>
+                    <input
+                      type="text"
+                      value={nickname}
+                      onChange={(e) => setNickname(e.target.value)}
+                      placeholder={i18n.language === 'it' ? 'Il tuo nickname...' : 'Your nickname...'}
+                      maxLength={20}
+                      style={{
+                        padding: '0.75rem 1rem',
+                        borderRadius: '8px',
+                        border: '2px solid white',
+                        fontSize: '1rem',
+                        minWidth: '200px',
+                        outline: 'none'
+                      }}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') handleSaveNickname();
+                      }}
+                    />
+                    <button
+                      onClick={handleSaveNickname}
+                      disabled={savingNickname}
+                      style={{
+                        padding: '0.75rem 1.5rem',
+                        background: savingNickname ? '#9ca3af' : 'white',
+                        color: '#f59e0b',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '1rem',
+                        fontWeight: '600',
+                        cursor: savingNickname ? 'not-allowed' : 'pointer',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                      }}
+                    >
+                      {savingNickname 
+                        ? (i18n.language === 'it' ? 'Salvo...' : 'Saving...') 
+                        : (i18n.language === 'it' ? '✓ Salva' : '✓ Save')}
+                    </button>
+                    <button
+                      onClick={() => setShowNicknameInput(false)}
+                      style={{
+                        padding: '0.75rem 1rem',
+                        background: 'rgba(255,255,255,0.3)',
+                        color: 'white',
+                        border: '2px solid white',
+                        borderRadius: '8px',
+                        fontSize: '1rem',
+                        fontWeight: '600',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {i18n.language === 'it' ? 'Annulla' : 'Cancel'}
+                    </button>
+                  </div>
+                  <p style={{ 
+                    fontSize: '0.75rem', 
+                    marginTop: '0.75rem',
+                    opacity: 0.8 
+                  }}>
+                    {i18n.language === 'it' 
+                      ? 'Max 20 caratteri. Il nickname sarà pubblico.' 
+                      : 'Max 20 characters. Nickname will be public.'}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Perception vs Reality Comparison */}
           {foods.length > 0 && (
