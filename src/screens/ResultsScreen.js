@@ -342,7 +342,7 @@ const ResultsScreen = () => {
           </div>
 
           {/* Ranking Position Card */}
-          {(rankingPosition !== null && totalParticipants > 0) || totalParticipants > 0 ? (
+          {totalParticipants > 0 && (
             <div style={{
               background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
               borderRadius: '20px',
