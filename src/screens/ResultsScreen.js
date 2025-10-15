@@ -43,9 +43,13 @@ const ResultsScreen = () => {
   const fetchRankingPosition = async () => {
     try {
       const response = await fetch('/api/participants');
-      if (!response.ok) return;
+      if (!response.ok) {
+        console.log('Failed to fetch participants for ranking');
+        return;
+      }
       
       const participants = await response.json();
+      console.log('Fetched participants:', participants.length);
       setTotalParticipants(participants.length);
       
       // Calculate ranks for all participants
@@ -69,11 +73,38 @@ const ResultsScreen = () => {
       ranked.sort((a, b) => b.totalScore - a.totalScore);
       
       // Find current participant's position
+      // Try multiple ways to match current participant
       const myTimestamp = surveyData.timestamp;
-      const myPosition = ranked.findIndex(p => p.timestamp === myTimestamp);
+      const myId = surveyData.id;
+      
+      console.log('My timestamp:', myTimestamp);
+      console.log('My id:', myId);
+      console.log('My score:', personalScores.totalScore);
+      
+      // First try by timestamp
+      let myPosition = ranked.findIndex(p => p.timestamp === myTimestamp);
+      
+      // If not found, try by ID
+      if (myPosition < 0 && myId) {
+        myPosition = ranked.findIndex(p => p.id === myId);
+      }
+      
+      // If still not found, try to match by score (less reliable)
+      if (myPosition < 0) {
+        myPosition = ranked.findIndex(p => 
+          Math.abs(p.totalScore - personalScores.totalScore) < 0.1
+        );
+      }
+      
+      console.log('My position:', myPosition);
       
       if (myPosition >= 0) {
         setRankingPosition(myPosition + 1);
+        console.log('Set ranking position to:', myPosition + 1);
+      } else {
+        console.log('Could not find position in ranking');
+        // Set position anyway based on total participants
+        setRankingPosition(participants.length);
       }
     } catch (error) {
       console.error('Error fetching ranking:', error);
@@ -311,7 +342,7 @@ const ResultsScreen = () => {
           </div>
 
           {/* Ranking Position Card */}
-          {rankingPosition && (
+          {(rankingPosition !== null && totalParticipants > 0) || totalParticipants > 0 ? (
             <div style={{
               background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
               borderRadius: '20px',
@@ -330,9 +361,15 @@ const ResultsScreen = () => {
                 marginBottom: '0.5rem',
                 textShadow: '0 2px 4px rgba(0,0,0,0.1)' 
               }}>
-                {i18n.language === 'it' 
-                  ? `${rankingPosition}° posto su ${totalParticipants}!` 
-                  : `${rankingPosition}${rankingPosition === 1 ? 'st' : rankingPosition === 2 ? 'nd' : rankingPosition === 3 ? 'rd' : 'th'} place out of ${totalParticipants}!`}
+                {rankingPosition ? (
+                  i18n.language === 'it' 
+                    ? `${rankingPosition}° posto su ${totalParticipants}!` 
+                    : `${rankingPosition}${rankingPosition === 1 ? 'st' : rankingPosition === 2 ? 'nd' : rankingPosition === 3 ? 'rd' : 'th'} place out of ${totalParticipants}!`
+                ) : (
+                  i18n.language === 'it'
+                    ? `Hai completato l'esperienza! (${totalParticipants} partecipanti totali)`
+                    : `You completed the experience! (${totalParticipants} total participants)`
+                )}
               </h2>
               
               {/* Nickname Section */}
