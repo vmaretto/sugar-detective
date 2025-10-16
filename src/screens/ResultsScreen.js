@@ -492,39 +492,6 @@ const ResultsScreen = () => {
             />
           )}
 
-          {/* Profile Summary */}
-          <div style={{
-            background: '#f3f4f6',
-            borderRadius: '15px',
-            padding: '1.5rem',
-            marginBottom: '2rem',
-            marginTop: '2rem'
-          }}>
-            <h3 style={{
-              fontSize: '1.25rem',
-              fontWeight: 'bold',
-              color: '#667eea',
-              marginBottom: '1rem'
-            }}>
-              {t('results.yourProfile')}
-            </h3>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '1rem'
-            }}>
-              <div>
-                <strong>{t('profile.age')}:</strong> {profile.age || 'N/A'}
-              </div>
-              <div>
-                <strong>{t('profile.gender')}:</strong> {profile.gender || 'N/A'}
-              </div>
-              <div>
-                <strong>{t('profile.sugarHabits')}:</strong> {profile.consumption || profile.sugarHabits || 'N/A'}
-              </div>
-            </div>
-          </div>
-
           {/* Your Measurements - SENZA GLUCOSIO */}
           {Object.keys(measurements).length > 0 && (
             <div style={{
@@ -655,34 +622,6 @@ const ResultsScreen = () => {
               </div>
             </div>
           )}
-
-          {/* Thank You Message */}
-          <div style={{
-            background: '#f9fafb',
-            border: '2px solid #667eea',
-            borderRadius: '15px',
-            padding: '2rem',
-            textAlign: 'center'
-          }}>
-            <h3 style={{ 
-              fontSize: '1.5rem', 
-              fontWeight: 'bold', 
-              marginBottom: '0.5rem',
-              color: '#667eea'
-            }}>
-              {i18n.language === 'it' ? '🙏 Grazie per aver partecipato!' : '🙏 Thank you for participating!'}
-            </h3>
-            <p style={{ 
-              color: '#666',
-              fontSize: '1.125rem',
-              lineHeight: '1.6',
-              margin: 0
-            }}>
-              {i18n.language === 'it' 
-                ? 'I tuoi dati aiuteranno la ricerca sul consumo consapevole di zuccheri.'
-                : 'Your data will help research on conscious sugar consumption.'}
-            </p>
-          </div>
 
           {/* Footer */}
           <div style={{

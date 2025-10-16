@@ -1,4 +1,4 @@
-// src/screens/PreTestScreen.js - Part 2: Perceived Knowledge
+// src/screens/PreTestScreen.js - Part 2: Perceived Knowledge CON INTERVALLI BRIX
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -104,6 +104,18 @@ function PreTestScreen() {
     return descriptions[i18n.language][value];
   };
 
+  // Funzione per ottenere intervalli Brix
+  const getBrixRange = (value) => {
+    const ranges = {
+      1: "0-2 °Bx",
+      2: "2-5 °Bx",
+      3: "5-8 °Bx",
+      4: "8-12 °Bx",
+      5: "12+ °Bx"
+    };
+    return ranges[value] || "";
+  };
+
   if (loading) {
     return (
       <div className="screen">
@@ -169,6 +181,14 @@ function PreTestScreen() {
                         color: responses[food.id] === value ? 'inherit' : '#666'
                       }}>
                         {getScaleDescription(value)}
+                      </span>
+                      <span style={{ 
+                        fontSize: '0.6rem', 
+                        lineHeight: '1.1',
+                        color: responses[food.id] === value ? 'inherit' : '#999',
+                        fontWeight: '600'
+                      }}>
+                        {getBrixRange(value)}
                       </span>
                     </label>
                   ))}
