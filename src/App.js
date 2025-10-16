@@ -8,7 +8,6 @@ import './App.css';
 import WelcomeScreen from './screens/WelcomeScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import PreTestScreen from './screens/PreTestScreen';
-import Part3Screen from './screens/Part3Screen';
 import AwarenessScreen from './screens/AwarenessScreen';
 import MeasurementScreen from './screens/MeasurementScreen';
 import PostTestScreen from './screens/PostTestScreen';
@@ -25,7 +24,6 @@ function App() {
           <Route path="/" element={<WelcomeScreen />} />
           <Route path="/profile" element={<ProfileScreen />} />
           <Route path="/pretest" element={<PreTestScreen />} />
-          <Route path="/part3" element={<Part3Screen />} />
           <Route path="/awareness" element={<AwarenessScreen />} />
           <Route path="/measurement" element={<MeasurementScreen />} />
           <Route path="/posttest" element={<PostTestScreen />} />

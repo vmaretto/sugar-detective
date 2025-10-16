@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { Trophy, Download, Home } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import PerceptionComparison from '../components/PerceptionComparison';
-import PairsComparison from '../components/PairsComparison';
 import { calculateTotalScore } from '../utils/rankingUtils';
 
 const ResultsScreen = () => {
@@ -21,9 +20,8 @@ const ResultsScreen = () => {
 
   const surveyData = location.state?.surveyData || {};
 
-  // Load foods and pairs from surveyData
+  // Load foods from surveyData
   const foods = surveyData.foods || [];
-  const comparisonPairs = surveyData.comparison_pairs || [];
 
   // Calculate personal scores
   const personalScores = foods.length > 0 ? calculateTotalScore({
@@ -32,7 +30,7 @@ const ResultsScreen = () => {
     part4_awareness: surveyData.part4_awareness || surveyData.part4,
     measurements: surveyData.measurements,
     foods: foods,
-    pairs: comparisonPairs
+    pairs: []
   }) : { totalScore: 0, knowledgeScore: 0, awarenessScore: 0 };
 
   // Fetch ranking position when component mounts
@@ -60,7 +58,7 @@ const ResultsScreen = () => {
           part4_awareness: p.data?.part4_awareness || p.data?.part4,
           measurements: p.data?.measurements,
           foods: p.data?.foods,
-          pairs: p.data?.comparison_pairs
+          pairs: []
         });
         return {
           id: p.id,
@@ -73,7 +71,6 @@ const ResultsScreen = () => {
       ranked.sort((a, b) => b.totalScore - a.totalScore);
       
       // Find current participant's position
-      // Try multiple ways to match current participant
       const myTimestamp = surveyData.timestamp;
       const myId = surveyData.id;
       
@@ -103,7 +100,6 @@ const ResultsScreen = () => {
         console.log('Set ranking position to:', myPosition + 1);
       } else {
         console.log('Could not find position in ranking');
-        // Set position anyway based on total participants
         setRankingPosition(participants.length);
       }
     } catch (error) {
@@ -119,10 +115,6 @@ const ResultsScreen = () => {
 
     setSavingNickname(true);
     try {
-      // Update participant with nickname
-      const participantId = surveyData.id;
-      
-      // Re-save participant data with nickname
       const updatedData = {
         ...surveyData,
         nickname: nickname.trim()
@@ -180,7 +172,6 @@ const ResultsScreen = () => {
     navigate('/');
   };
 
-  // Calculate some stats
   const profile = surveyData.profile || {};
   const measurements = surveyData.measurements || {};
 
@@ -269,7 +260,7 @@ const ResultsScreen = () => {
                 </div>
               </div>
               
-              {/* Conoscenza (Stime + Coppie) */}
+              {/* Conoscenza */}
               <div style={{
                 padding: '1.5rem',
                 background: 'white',
@@ -286,9 +277,6 @@ const ResultsScreen = () => {
                 </div>
                 <div style={{ fontSize: '0.875rem', color: '#666' }}>
                   / 100
-                </div>
-                <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.5rem', fontStyle: 'italic' }}>
-                  {i18n.language === 'it' ? '(Stime + Coppie)' : '(Estimates + Pairs)'}
                 </div>
               </div>
               
@@ -328,12 +316,12 @@ const ResultsScreen = () => {
                 <br />
                 {i18n.language === 'it' ? (
                   <>
-                    • <strong>Conoscenza (70%):</strong> 60% precisione stime + 40% coppie corrette<br />
+                    • <strong>Conoscenza (70%):</strong> Precisione delle tue stime di dolcezza<br />
                     • <strong>Consapevolezza (30%):</strong> Quanto conosci i tuoi limiti
                   </>
                 ) : (
                   <>
-                    • <strong>Knowledge (70%):</strong> 60% estimates accuracy + 40% correct pairs<br />
+                    • <strong>Knowledge (70%):</strong> Accuracy of your sweetness estimates<br />
                     • <strong>Awareness (30%):</strong> How well you know your limits
                   </>
                 )}
@@ -504,17 +492,6 @@ const ResultsScreen = () => {
             />
           )}
 
-          {/* Pairs Comparison - VERSIONE COMPATTA */}
-          {comparisonPairs.length > 0 && (
-            <PairsComparison
-              pairs={comparisonPairs}
-              foods={foods}
-              measurements={surveyData.measurements || {}}
-              part3Data={surveyData.part3 || {}}
-              language={i18n.language}
-            />
-          )}
-
           {/* Profile Summary */}
           <div style={{
             background: '#f3f4f6',
@@ -548,7 +525,7 @@ const ResultsScreen = () => {
             </div>
           </div>
 
-          {/* Your Measurements con confronto previsioni */}
+          {/* Your Measurements - SENZA GLUCOSIO */}
           {Object.keys(measurements).length > 0 && (
             <div style={{
               background: '#f3f4f6',
@@ -570,7 +547,7 @@ const ResultsScreen = () => {
                 gap: '1rem'
               }}>
                 {Object.entries(measurements).map(([foodId, value]) => {
-                  const { brix, glucose } = value || {};
+                  const { brix } = value || {};
                   const food = foods.find(f => f.id === parseInt(foodId));
                   const foodName = food ? (i18n.language === 'it' ? food.name_it : food.name_en) : foodId;
                   const emoji = food ? food.emoji : '🍎';
@@ -580,7 +557,7 @@ const ResultsScreen = () => {
                   const userPrediction = part2[foodId] || part2.responses?.[foodId];
                   
                   // Calculate real sweetness from brix
-                  const realSweetness = brix ? (brix / 2.5).toFixed(1) : null; // Rough conversion
+                  const realSweetness = brix ? (brix / 2.5).toFixed(1) : null;
                   
                   // Determine if prediction was accurate
                   let predictionStatus = null;
@@ -666,15 +643,10 @@ const ResultsScreen = () => {
                         </div>
                       )}
                       
-                      {/* Misurazioni */}
+                      {/* Misurazioni - SOLO BRIX */}
                       <div style={{ fontSize: '0.875rem', color: '#111' }}>
-                        <div style={{ marginBottom: '0.25rem' }}>
-                          <span style={{ fontWeight: 600 }}>°Bx:</span> {brix ?? 'N/A'}
-                        </div>
                         <div>
-                          <span style={{ fontWeight: 600 }}>
-                            {i18n.language === 'it' ? 'Glucosio:' : 'Glucose:'}
-                          </span> {glucose ?? 'N/A'} g/100g
+                          <span style={{ fontWeight: 600 }}>°Bx:</span> {brix ?? 'N/A'}
                         </div>
                       </div>
                     </div>
@@ -698,7 +670,7 @@ const ResultsScreen = () => {
               marginBottom: '0.5rem',
               color: '#667eea'
             }}>
-              {t('results.thankYou')}
+              {i18n.language === 'it' ? '🙏 Grazie per aver partecipato!' : '🙏 Thank you for participating!'}
             </h3>
             <p style={{ 
               color: '#666',
@@ -706,7 +678,9 @@ const ResultsScreen = () => {
               lineHeight: '1.6',
               margin: 0
             }}>
-              {t('results.dataContribution')}
+              {i18n.language === 'it' 
+                ? 'I tuoi dati aiuteranno la ricerca sul consumo consapevole di zuccheri.'
+                : 'Your data will help research on conscious sugar consumption.'}
             </p>
           </div>
 

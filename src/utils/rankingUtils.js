@@ -1,24 +1,18 @@
-// src/utils/rankingUtils.js - Algoritmo di ranking per classifica partecipanti
+// src/utils/rankingUtils.js - Algoritmo di ranking SENZA coppie
 
-import { comparePerceptionVsReality, compareFoods, isPairAnswerCorrect } from './sugarUtils';
+import { comparePerceptionVsReality } from './sugarUtils';
 
 /**
  * Calcola il punteggio totale di un partecipante
  * Basato su 2 componenti:
- * 1. Knowledge Score (0-100): Combinazione di stime (60%) + coppie (40%)
+ * 1. Knowledge Score (0-100): Precisione delle stime
  * 2. Awareness Score (0-100): Consapevolezza dei propri errori
  * 
  * Formula finale: (Knowledge * 0.7) + (Awareness * 0.3)
  */
 export const calculateTotalScore = (participantData) => {
   // Calcolo punteggio stime (0-100)
-  const estimatesScore = calculateEstimatesScore(participantData);
-  
-  // Calcolo punteggio coppie (0-100)
-  const pairsScore = calculatePairsScore(participantData);
-  
-  // Calcolo punteggio conoscenza (0-100): 60% stime + 40% coppie
-  const knowledgeScore = (estimatesScore * 0.6) + (pairsScore * 0.4);
+  const knowledgeScore = calculateEstimatesScore(participantData);
   
   // Calcolo punteggio consapevolezza (0-100)
   const awarenessScore = calculateAwarenessScore(participantData);
@@ -30,7 +24,6 @@ export const calculateTotalScore = (participantData) => {
     totalScore: parseFloat(totalScore.toFixed(1)),
     knowledgeScore: parseFloat(knowledgeScore.toFixed(1)),
     awarenessScore: parseFloat(awarenessScore.toFixed(1))
-    // Non restituiamo più pairsScore separato
   };
 };
 
@@ -127,53 +120,6 @@ export const calculateAwarenessScore = (participantData) => {
 };
 
 /**
- * Pairs Score: Correttezza delle comparazioni a coppie
- */
-export const calculatePairsScore = (participantData) => {
-  const { part3_data, measurements, pairs, foods } = participantData;
-  
-  if (!part3_data || !measurements || !pairs || !foods) return 0;
-  
-  const part3 = typeof part3_data === 'string' ? JSON.parse(part3_data) : part3_data;
-  const meas = typeof measurements === 'string' ? JSON.parse(measurements) : measurements;
-  const pairsList = typeof pairs === 'string' ? JSON.parse(pairs) : pairs;
-  const foodsList = typeof foods === 'string' ? JSON.parse(foods) : foods;
-  
-  const foodsMap = {};
-  foodsList.forEach(food => {
-    foodsMap[food.id] = food;
-  });
-  
-  let correctAnswers = 0;
-  let totalAnswers = 0;
-  
-  pairsList.forEach((pair, index) => {
-    const pairId = `pair_${index}`;
-    const userAnswer = part3[pairId];
-    
-    if (!userAnswer) return;
-    
-    const foodA = foodsMap[pair.food_a_id];
-    const foodB = foodsMap[pair.food_b_id];
-    
-    if (!foodA || !foodB) return;
-    
-    const brixA = meas[foodA.id]?.brix || 0;
-    const brixB = meas[foodB.id]?.brix || 0;
-    
-    const reality = compareFoods(brixA, brixB);
-    const isCorrect = isPairAnswerCorrect(userAnswer, reality);
-    
-    if (isCorrect) correctAnswers++;
-    totalAnswers++;
-  });
-  
-  if (totalAnswers === 0) return 0;
-  
-  return (correctAnswers / totalAnswers) * 100;
-};
-
-/**
  * Genera classifica ordinata di tutti i partecipanti
  */
 export const generateRanking = (participants) => {
@@ -236,7 +182,6 @@ export default {
   calculateTotalScore,
   calculateEstimatesScore,
   calculateAwarenessScore,
-  calculatePairsScore,
   generateRanking,
   findParticipantRank,
   getRankingStats
