@@ -8,6 +8,7 @@ const resources = {
       // Welcome Screen
       "welcome.title": "SUGAR DETECTIVE",
       "welcome.subtitle": "Scopri quanto zucchero si nasconde nella frutta e verdura!",
+      "welcome.privacy": "Tutti i dati saranno raccolti in forma anonima e utilizzati esclusivamente per uno studio europeo sulle abitudini alimentari sostenibili, nel rispetto della normativa sulla privacy.",
       "welcome.start": "Inizia l'esperienza",
       
       // Profile Form
@@ -38,7 +39,9 @@ const resources = {
       
       // Pre-Test Questions
       "pretest.title": "Quanto ne sai?",
-      "pretest.instructions": "Per ogni alimento, indica quanto pensi che sia dolce (0 = pochissimo zucchero, 10 = molto zucchero)",
+      "pretest.instructions": "Per ogni alimento, indica quanto pensi che sia dolce (cioè quanto zucchero naturale contiene) su una scala da 1 a 5",
+      "pretest.scale1": "1 = pochissimo zucchero",
+      "pretest.scale5": "5 = molto zucchero",
       "pretest.timer": "Tempo",
       "pretest.sweetness": "Quanto è dolce secondo te?",
       "pretest.comparison": "Rispetto alla mela contiene:",
@@ -66,15 +69,13 @@ const resources = {
       "measurement.title": "Ora misura!",
       "measurement.instructions": "Usa lo spettrometro per misurare ogni alimento e inserisci i valori rilevati:",
       "measurement.brix": "°Brix",
-      "measurement.glucose": "Glucosio (g/100g)",
+      "measurement.brixExplanation": "Il Brix è una misura che serve per capire quanto zucchero c'è in un frutto o in una verdura. Più il valore di Brix è alto, più il prodotto è dolce, gustoso e nutriente. In pratica, un frutto con un Brix alto contiene più zuccheri naturali, ma anche più vitamine, minerali e sostanze buone per la salute. Per questo i coltivatori usano il Brix per valutare la qualità e la maturazione dei loro prodotti — un po' come un \"indice di bontà e nutrimento\".",
       "measurement.placeholder.brix": "es. 12.5",
-      "measurement.placeholder.glucose": "es. 10.2",
       "measurement.results": "Vedi risultati",
       
       // Post-Test Questions
       "posttest.title": "Dopo la misurazione",
-      "posttest.different": "Il risultato era diverso da quello che ti aspettavi?",
-      "posttest.different.how": "Se sì, in che senso?",
+      "posttest.different": "Il risultato è diverso da quello che ti aspettavi?",
       "posttest.awareness": "Ti senti più consapevole di quanto zucchero contengono i diversi alimenti?",
       "posttest.awareness.much": "Molto di più",
       "posttest.awareness.bit": "Un po' di più",
@@ -92,8 +93,6 @@ const resources = {
       "results.awarenessScore": "Punteggio Consapevolezza",
       "results.yourProfile": "Il tuo profilo",
       "results.yourEstimations": "Le tue stime",
-      "results.thankYou": "Grazie mille!",
-      "results.dataContribution": "I tuoi dati ci aiuteranno a migliorare la consapevolezza sugli zuccheri negli alimenti",
       "results.downloading": "Download in corso...",
       "results.downloadError": "Errore durante il download dell'immagine",
       "results.startNew": "Nuova esperienza",
@@ -159,6 +158,7 @@ const resources = {
       // Welcome Screen
       "welcome.title": "SUGAR DETECTIVE",
       "welcome.subtitle": "Discover how much sugar is hidden in fruits and vegetables!",
+      "welcome.privacy": "All data will be collected anonymously and used exclusively for a European study on sustainable eating habits, in compliance with privacy regulations.",
       "welcome.start": "Start the experience",
       
       // Profile Form
@@ -189,7 +189,9 @@ const resources = {
       
       // Pre-Test Questions
       "pretest.title": "How much do you know?",
-      "pretest.instructions": "For each food, indicate how sweet you think it is (0 = very little sugar, 10 = a lot of sugar)",
+      "pretest.instructions": "For each food, indicate how sweet you think it is (i.e., how much natural sugar it contains) on a scale from 1 to 5",
+      "pretest.scale1": "1 = very little sugar",
+      "pretest.scale5": "5 = a lot of sugar",
       "pretest.timer": "Time",
       "pretest.sweetness": "How sweet do you think it is?",
       "pretest.comparison": "Compared to apple it contains:",
@@ -217,15 +219,13 @@ const resources = {
       "measurement.title": "Now measure!",
       "measurement.instructions": "Use the spectrometer to measure each food and enter the detected values:",
       "measurement.brix": "°Brix",
-      "measurement.glucose": "Glucose (g/100g)",
+      "measurement.brixExplanation": "Brix is a measure used to understand how much sugar is in a fruit or vegetable. The higher the Brix value, the sweeter, tastier, and more nutritious the product is. In practice, a fruit with high Brix contains more natural sugars, but also more vitamins, minerals, and beneficial substances for health. That's why growers use Brix to evaluate the quality and ripeness of their products — a bit like a \"goodness and nutrition index\".",
       "measurement.placeholder.brix": "e.g. 12.5",
-      "measurement.placeholder.glucose": "e.g. 10.2",
       "measurement.results": "See results",
       
       // Post-Test Questions
       "posttest.title": "After the measurement",
-      "posttest.different": "Was the result different from what you expected?",
-      "posttest.different.how": "If yes, in what way?",
+      "posttest.different": "Is the result different from what you expected?",
       "posttest.awareness": "Do you feel more aware of how much sugar different foods contain?",
       "posttest.awareness.much": "Much more",
       "posttest.awareness.bit": "A bit more",
@@ -243,8 +243,6 @@ const resources = {
       "results.awarenessScore": "Awareness Score",
       "results.yourProfile": "Your profile",
       "results.yourEstimations": "Your estimations",
-      "results.thankYou": "Thank you so much!",
-      "results.dataContribution": "Your data will help us improve awareness about sugar in foods",
       "results.downloading": "Downloading...",
       "results.downloadError": "Error downloading image",
       "results.startNew": "New experience",

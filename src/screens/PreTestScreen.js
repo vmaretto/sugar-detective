@@ -75,11 +75,33 @@ function PreTestScreen() {
     sessionStorage.setItem('part2Data', JSON.stringify(part2Data));
     sessionStorage.setItem('foods', JSON.stringify(foods));
     
-    navigate('/part3');
+    // Salta Part3Screen e vai direttamente ad Awareness
+    navigate('/awareness');
   };
 
   const getFoodName = (food) => {
     return i18n.language === 'it' ? food.name_it : food.name_en;
+  };
+
+  const getScaleDescription = (value) => {
+    const descriptions = {
+      it: {
+        1: "Pochissimo dolce",
+        2: "Poco dolce",
+        3: "Moderatamente dolce",
+        4: "Dolce",
+        5: "Molto dolce"
+      },
+      en: {
+        1: "Very little sweet",
+        2: "Slightly sweet",
+        3: "Moderately sweet",
+        4: "Sweet",
+        5: "Very sweet"
+      }
+    };
+    
+    return descriptions[i18n.language][value];
   };
 
   if (loading) {
@@ -93,50 +115,94 @@ function PreTestScreen() {
   }
 
   return (
-    <div className="screen" style={{ paddingTop: '40px', paddingBottom: '40px' }}>
-      <div className="container" style={{ maxWidth: '700px' }}>
-        <div className="card">
-          <h2>Parte 2 - Conoscenza percepita</h2>
-          <p>Per ognuno dei seguenti alimenti, indica quanto pensi che sia dolce (cioè quanto zucchero naturale contiene) su una scala da 1 a 5:</p>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', marginBottom: '24px' }}>
-            1 = pochissimo zucchero, 5 = molto zucchero
-          </p>
-
-          {foods.map(food => (
-            <div key={food.id} className="food-item">
-              <div className="food-header">
-                <span className="food-emoji">{food.emoji}</span>
-                <span className="food-name">{getFoodName(food)}</span>
-              </div>
-
-              <div className="radio-group" style={{ flexDirection: 'row', gap: '8px', justifyContent: 'space-between' }}>
-                {[1, 2, 3, 4, 5].map(value => (
-                  <label 
-                    key={value} 
-                    className={`radio-option ${responses[food.id] === value ? 'selected' : ''}`}
-                    style={{ flex: 1, textAlign: 'center', padding: '16px 8px' }}
-                    onClick={() => handleSweetnessSelect(food.id, value)}
-                  >
-                    <input
-                      type="radio"
-                      name={`sweetness-${food.id}`}
-                      value={value}
-                      checked={responses[food.id] === value}
-                      onChange={() => handleSweetnessSelect(food.id, value)}
-                      style={{ display: 'none' }}
-                    />
-                    <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{value}</span>
-                  </label>
-                ))}
-              </div>
+    <div className="screen" style={{ paddingTop: '40px', paddingBottom: '40px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1 }}>
+        <div className="container" style={{ maxWidth: '700px' }}>
+          <div className="card">
+            <h2>Parte 2 - Conoscenza percepita</h2>
+            <p>{t('pretest.instructions')}:</p>
+            <div style={{
+              background: '#f0f9ff',
+              border: '2px solid #0ea5e9',
+              borderRadius: '10px',
+              padding: '12px',
+              marginBottom: '24px',
+              fontSize: '0.875rem'
+            }}>
+              <strong>{t('pretest.scale1')}</strong> → <strong>{t('pretest.scale5')}</strong>
             </div>
-          ))}
 
-          <button className="btn btn-primary" onClick={handleSubmit}>
-            {t('common.next')}
-          </button>
+            {foods.map(food => (
+              <div key={food.id} className="food-item">
+                <div className="food-header">
+                  <span className="food-emoji">{food.emoji}</span>
+                  <span className="food-name">{getFoodName(food)}</span>
+                </div>
+
+                <div className="radio-group" style={{ flexDirection: 'row', gap: '8px', justifyContent: 'space-between' }}>
+                  {[1, 2, 3, 4, 5].map(value => (
+                    <label 
+                      key={value} 
+                      className={`radio-option ${responses[food.id] === value ? 'selected' : ''}`}
+                      style={{ 
+                        flex: 1, 
+                        textAlign: 'center', 
+                        padding: '12px 4px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px'
+                      }}
+                      onClick={() => handleSweetnessSelect(food.id, value)}
+                    >
+                      <input
+                        type="radio"
+                        name={`sweetness-${food.id}`}
+                        value={value}
+                        checked={responses[food.id] === value}
+                        onChange={() => handleSweetnessSelect(food.id, value)}
+                        style={{ display: 'none' }}
+                      />
+                      <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{value}</span>
+                      <span style={{ 
+                        fontSize: '0.65rem', 
+                        lineHeight: '1.2',
+                        color: responses[food.id] === value ? 'inherit' : '#666'
+                      }}>
+                        {getScaleDescription(value)}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            <button className="btn btn-primary" onClick={handleSubmit}>
+              {t('common.next')}
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Switch Footer */}
+      <footer style={{
+        background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)',
+        color: 'white',
+        padding: '1.5rem 1rem',
+        marginTop: '3rem',
+        fontSize: '0.75rem'
+      }}>
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          textAlign: 'center',
+          opacity: 0.9
+        }}>
+          <p style={{ margin: 0 }}>
+            SWITCH Project - Sustainable and Healthy Diets in Europe | 
+            Funded by the EU's Horizon 2020 programme
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

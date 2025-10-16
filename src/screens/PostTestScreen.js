@@ -9,7 +9,6 @@ function PostTestScreen() {
   
   const [formData, setFormData] = useState({
     different: '',
-    differentHow: '',
     awareness: '',
     education: ''
   });
@@ -41,7 +40,6 @@ function PostTestScreen() {
       // Gather all data from sessionStorage
       const profileData = JSON.parse(sessionStorage.getItem('profileData') || '{}');
       const part2Data = JSON.parse(sessionStorage.getItem('part2Data') || '{}');
-      const part3Data = JSON.parse(sessionStorage.getItem('part3Data') || '{}');
       const awarenessData = JSON.parse(sessionStorage.getItem('awarenessData') || '{}');
       const measurements = JSON.parse(sessionStorage.getItem('measurements') || '{}');
       const posttestData = formData;
@@ -55,7 +53,6 @@ function PostTestScreen() {
         language,
         profile: profileData,
         part2: part2Data,
-        part3: part3Data,
         part4_awareness: awarenessData,
         measurements,
         part5_posttest: posttestData,
@@ -89,7 +86,6 @@ function PostTestScreen() {
       return {
         profile: JSON.parse(sessionStorage.getItem('profileData') || '{}'),
         part2: JSON.parse(sessionStorage.getItem('part2Data') || '{}'),
-        part3: JSON.parse(sessionStorage.getItem('part3Data') || '{}'),
         part4: JSON.parse(sessionStorage.getItem('awarenessData') || '{}'),
         measurements: JSON.parse(sessionStorage.getItem('measurements') || '{}'),
         foods: JSON.parse(sessionStorage.getItem('foods') || '[]'),
@@ -101,134 +97,143 @@ function PostTestScreen() {
   const isFormValid = formData.different && formData.awareness && formData.education;
 
   return (
-    <div className="screen">
-      <div className="card">
-        <h2>Parte 5 - Dopo la misurazione</h2>
-        <p style={{ marginBottom: '24px' }}>
-          Dopo aver osservato la misurazione reale del contenuto zuccherino con lo strumento:
-        </p>
-        
-        <form onSubmit={handleSubmit}>
-          {/* Question 1: Different from expected */}
-          <div className="form-group">
-            <label className="form-label">{t('posttest.different')}</label>
-            <div className="radio-group">
-              <label className={`radio-option ${formData.different === 'yes' ? 'selected' : ''}`}>
-                <input
-                  type="radio"
-                  name="different"
-                  value="yes"
-                  checked={formData.different === 'yes'}
-                  onChange={(e) => handleChange('different', e.target.value)}
-                />
-                {t('common.yes')}
-              </label>
-              <label className={`radio-option ${formData.different === 'no' ? 'selected' : ''}`}>
-                <input
-                  type="radio"
-                  name="different"
-                  value="no"
-                  checked={formData.different === 'no'}
-                  onChange={(e) => handleChange('different', e.target.value)}
-                />
-                {t('common.no')}
-              </label>
-            </div>
-          </div>
-
-          {/* Optional text field if yes */}
-          {formData.different === 'yes' && (
+    <div className="screen" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="card">
+          <h2>Parte 5 - Dopo la misurazione</h2>
+          <p style={{ marginBottom: '24px' }}>
+            Dopo aver osservato la misurazione reale del contenuto zuccherino con lo strumento:
+          </p>
+          
+          <form onSubmit={handleSubmit}>
+            {/* Question 1: Different from expected */}
             <div className="form-group">
-              <label className="form-label">Se sì, in che senso?</label>
-              <input
-                type="text"
-                className="form-input"
-                value={formData.differentHow}
-                onChange={(e) => handleChange('differentHow', e.target.value)}
-                placeholder={i18n.language === 'it' ? "es. Le verdure avevano più zucchero di quanto pensassi" : "e.g. Vegetables had more sugar than I thought"}
-              />
+              <label className="form-label">{t('posttest.different')}</label>
+              <div className="radio-group">
+                <label className={`radio-option ${formData.different === 'yes' ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="different"
+                    value="yes"
+                    checked={formData.different === 'yes'}
+                    onChange={(e) => handleChange('different', e.target.value)}
+                  />
+                  {t('common.yes')}
+                </label>
+                <label className={`radio-option ${formData.different === 'no' ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="different"
+                    value="no"
+                    checked={formData.different === 'no'}
+                    onChange={(e) => handleChange('different', e.target.value)}
+                  />
+                  {t('common.no')}
+                </label>
+              </div>
             </div>
-          )}
 
-          {/* Question 2: Increased awareness */}
-          <div className="form-group">
-            <label className="form-label">{t('posttest.awareness')}</label>
-            <div className="radio-group">
-              <label className={`radio-option ${formData.awareness === 'much' ? 'selected' : ''}`}>
-                <input
-                  type="radio"
-                  name="awareness"
-                  value="much"
-                  checked={formData.awareness === 'much'}
-                  onChange={(e) => handleChange('awareness', e.target.value)}
-                />
-                {t('posttest.awareness.much')}
-              </label>
-              <label className={`radio-option ${formData.awareness === 'bit' ? 'selected' : ''}`}>
-                <input
-                  type="radio"
-                  name="awareness"
-                  value="bit"
-                  checked={formData.awareness === 'bit'}
-                  onChange={(e) => handleChange('awareness', e.target.value)}
-                />
-                {t('posttest.awareness.bit')}
-              </label>
-              <label className={`radio-option ${formData.awareness === 'same' ? 'selected' : ''}`}>
-                <input
-                  type="radio"
-                  name="awareness"
-                  value="same"
-                  checked={formData.awareness === 'same'}
-                  onChange={(e) => handleChange('awareness', e.target.value)}
-                />
-                {t('posttest.awareness.same')}
-              </label>
+            {/* Question 2: Increased awareness */}
+            <div className="form-group">
+              <label className="form-label">{t('posttest.awareness')}</label>
+              <div className="radio-group">
+                <label className={`radio-option ${formData.awareness === 'much' ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="awareness"
+                    value="much"
+                    checked={formData.awareness === 'much'}
+                    onChange={(e) => handleChange('awareness', e.target.value)}
+                  />
+                  {t('posttest.awareness.much')}
+                </label>
+                <label className={`radio-option ${formData.awareness === 'bit' ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="awareness"
+                    value="bit"
+                    checked={formData.awareness === 'bit'}
+                    onChange={(e) => handleChange('awareness', e.target.value)}
+                  />
+                  {t('posttest.awareness.bit')}
+                </label>
+                <label className={`radio-option ${formData.awareness === 'same' ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="awareness"
+                    value="same"
+                    checked={formData.awareness === 'same'}
+                    onChange={(e) => handleChange('awareness', e.target.value)}
+                  />
+                  {t('posttest.awareness.same')}
+                </label>
+              </div>
             </div>
-          </div>
 
-          {/* Question 3: Educational use */}
-          <div className="form-group">
-            <label className="form-label">{t('posttest.education')}</label>
-            <div className="radio-group">
-              <label className={`radio-option ${formData.education === 'yes' ? 'selected' : ''}`}>
-                <input
-                  type="radio"
-                  name="education"
-                  value="yes"
-                  checked={formData.education === 'yes'}
-                  onChange={(e) => handleChange('education', e.target.value)}
-                />
-                {t('posttest.education.yes')}
-              </label>
-              <label className={`radio-option ${formData.education === 'no' ? 'selected' : ''}`}>
-                <input
-                  type="radio"
-                  name="education"
-                  value="no"
-                  checked={formData.education === 'no'}
-                  onChange={(e) => handleChange('education', e.target.value)}
-                />
-                {t('posttest.education.no')}
-              </label>
-              <label className={`radio-option ${formData.education === 'dunno' ? 'selected' : ''}`}>
-                <input
-                  type="radio"
-                  name="education"
-                  value="dunno"
-                  checked={formData.education === 'dunno'}
-                  onChange={(e) => handleChange('education', e.target.value)}
-                />
-                {t('posttest.education.dunno')}
-              </label>
+            {/* Question 3: Educational use */}
+            <div className="form-group">
+              <label className="form-label">{t('posttest.education')}</label>
+              <div className="radio-group">
+                <label className={`radio-option ${formData.education === 'yes' ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="education"
+                    value="yes"
+                    checked={formData.education === 'yes'}
+                    onChange={(e) => handleChange('education', e.target.value)}
+                  />
+                  {t('posttest.education.yes')}
+                </label>
+                <label className={`radio-option ${formData.education === 'no' ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="education"
+                    value="no"
+                    checked={formData.education === 'no'}
+                    onChange={(e) => handleChange('education', e.target.value)}
+                  />
+                  {t('posttest.education.no')}
+                </label>
+                <label className={`radio-option ${formData.education === 'dunno' ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="education"
+                    value="dunno"
+                    checked={formData.education === 'dunno'}
+                    onChange={(e) => handleChange('education', e.target.value)}
+                  />
+                  {t('posttest.education.dunno')}
+                </label>
+              </div>
             </div>
-          </div>
 
-          <button type="submit" className="btn btn-primary" disabled={!isFormValid}>
-            {t('posttest.submit')}
-          </button>
-        </form>
+            <button type="submit" className="btn btn-primary" disabled={!isFormValid}>
+              {t('posttest.submit')}
+            </button>
+          </form>
+        </div>
       </div>
+
+      {/* Switch Footer */}
+      <footer style={{
+        background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)',
+        color: 'white',
+        padding: '1.5rem 1rem',
+        marginTop: 'auto',
+        fontSize: '0.75rem'
+      }}>
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          textAlign: 'center',
+          opacity: 0.9
+        }}>
+          <p style={{ margin: 0 }}>
+            SWITCH Project - Sustainable and Healthy Diets in Europe | 
+            Funded by the EU's Horizon 2020 programme
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

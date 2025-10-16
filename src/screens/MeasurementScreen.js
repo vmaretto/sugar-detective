@@ -14,23 +14,21 @@ function MeasurementScreen() {
     const storedFoods = JSON.parse(sessionStorage.getItem('foods') || '[]');
     setFoods(storedFoods);
     
-    // Initialize measurements
+    // Initialize measurements - SOLO BRIX
     const initialMeasurements = {};
     storedFoods.forEach(food => {
       initialMeasurements[food.id] = {
-        brix: '',
-        glucose: ''
+        brix: ''
       };
     });
     setMeasurements(initialMeasurements);
   }, []);
 
-  const handleMeasurementChange = (foodId, field, value) => {
+  const handleMeasurementChange = (foodId, value) => {
     setMeasurements(prev => ({
       ...prev,
       [foodId]: {
-        ...prev[foodId],
-        [field]: value
+        brix: value
       }
     }));
   };
@@ -38,7 +36,7 @@ function MeasurementScreen() {
   const handleSubmit = () => {
     // Validate that all measurements are filled
     const allFilled = foods.every(food => 
-      measurements[food.id]?.brix && measurements[food.id]?.glucose
+      measurements[food.id]?.brix
     );
 
     if (!allFilled) {
@@ -56,60 +54,87 @@ function MeasurementScreen() {
   };
 
   const allMeasurementsFilled = foods.length > 0 && foods.every(food => 
-    measurements[food.id]?.brix && measurements[food.id]?.glucose
+    measurements[food.id]?.brix
   );
 
   return (
-    <div className="screen" style={{ paddingTop: '40px', paddingBottom: '40px' }}>
-      <div className="container" style={{ maxWidth: '700px' }}>
-        <div className="card">
-          <h2>Misurazione con spettrometro</h2>
-          <p style={{ marginBottom: '24px' }}>
-            <strong>Ora usa lo spettrometro per misurare ogni alimento</strong> e inserisci i valori rilevati qui sotto:
-          </p>
+    <div className="screen" style={{ paddingTop: '40px', paddingBottom: '40px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1 }}>
+        <div className="container" style={{ maxWidth: '700px' }}>
+          <div className="card">
+            <h2>Misurazione con spettrometro</h2>
+            <p style={{ marginBottom: '16px' }}>
+              <strong>Ora usa lo spettrometro per misurare ogni alimento</strong> e inserisci i valori rilevati qui sotto:
+            </p>
 
-          {foods.map(food => (
-            <div key={food.id} className="food-item">
-              <div className="food-header">
-                <span className="food-emoji">{food.emoji}</span>
-                <span className="food-name">{getFoodName(food)}</span>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">{t('measurement.brix')}</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  className="form-input"
-                  value={measurements[food.id]?.brix || ''}
-                  onChange={(e) => handleMeasurementChange(food.id, 'brix', e.target.value)}
-                  placeholder={t('measurement.placeholder.brix')}
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">{t('measurement.glucose')}</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  className="form-input"
-                  value={measurements[food.id]?.glucose || ''}
-                  onChange={(e) => handleMeasurementChange(food.id, 'glucose', e.target.value)}
-                  placeholder={t('measurement.placeholder.glucose')}
-                />
-              </div>
+            {/* Spiegazione Brix */}
+            <div style={{
+              background: '#fef3c7',
+              border: '2px solid #fbbf24',
+              borderRadius: '12px',
+              padding: '16px',
+              marginBottom: '24px',
+              fontSize: '0.875rem',
+              lineHeight: '1.6'
+            }}>
+              <strong>📊 Cos'è il °Brix?</strong>
+              <p style={{ margin: '8px 0 0 0' }}>
+                {t('measurement.brixExplanation')}
+              </p>
             </div>
-          ))}
 
-          <button 
-            className="btn btn-primary" 
-            onClick={handleSubmit}
-            disabled={!allMeasurementsFilled}
-          >
-            {t('common.next')}
-          </button>
+            {foods.map(food => (
+              <div key={food.id} className="food-item">
+                <div className="food-header">
+                  <span className="food-emoji">{food.emoji}</span>
+                  <span className="food-name">{getFoodName(food)}</span>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">{t('measurement.brix')}</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="form-input"
+                    value={measurements[food.id]?.brix || ''}
+                    onChange={(e) => handleMeasurementChange(food.id, e.target.value)}
+                    placeholder={t('measurement.placeholder.brix')}
+                  />
+                </div>
+              </div>
+            ))}
+
+            <button 
+              className="btn btn-primary" 
+              onClick={handleSubmit}
+              disabled={!allMeasurementsFilled}
+            >
+              {t('common.next')}
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Switch Footer */}
+      <footer style={{
+        background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)',
+        color: 'white',
+        padding: '1.5rem 1rem',
+        marginTop: '3rem',
+        fontSize: '0.75rem'
+      }}>
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          textAlign: 'center',
+          opacity: 0.9
+        }}>
+          <p style={{ margin: 0 }}>
+            SWITCH Project - Sustainable and Healthy Diets in Europe | 
+            Funded by the EU's Horizon 2020 programme
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
