@@ -1,0 +1,139 @@
+.footer-switch {
+  background-color: #1b8fa7;
+  color: #ffffff;
+  padding: 40px 16px;
+  text-align: center;
+}
+
+.footer-switch a {
+  color: inherit;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.footer-switch a:hover,
+.footer-switch a:focus {
+  opacity: 0.8;
+}
+
+.footer-switch__top {
+  max-width: 960px;
+  margin: 0 auto 40px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footer-switch__logo img {
+  height: 80px;
+  width: auto;
+  object-fit: contain;
+}
+
+.footer-switch__menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.footer-switch__social {
+  margin-bottom: 40px;
+}
+
+.footer-switch__social h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.footer-switch__social-links {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.footer-switch__social-links img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.footer-switch__legal {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 40px;
+  font-size: 0.875rem;
+  text-decoration: underline;
+  align-items: center;
+}
+
+.footer-switch__funding {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.footer-switch__funding-logo {
+  height: 56px;
+  width: auto;
+  object-fit: contain;
+}
+
+.footer-switch__funding-details {
+  margin: 0;
+}
+
+.footer-switch__funding-disclaimer {
+  max-width: 400px;
+  margin: 0;
+  opacity: 0.8;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .footer-switch {
+    text-align: left;
+  }
+
+  .footer-switch__top {
+    flex-direction: row;
+    text-align: left;
+  }
+
+  .footer-switch__menu {
+    justify-content: flex-end;
+  }
+
+  .footer-switch__social {
+    text-align: center;
+  }
+
+  .footer-switch__legal {
+    flex-direction: row;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .footer-switch__funding {
+    flex-direction: row;
+    text-align: left;
+  }
+
+  .footer-switch__funding-disclaimer {
+    text-align: right;
+    max-width: 320px;
+  }
+}

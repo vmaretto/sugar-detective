@@ -214,26 +214,7 @@ function PostTestScreen() {
         </div>
       </div>
 
-      {/* Switch Footer */}
-      <footer style={{
-        background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)',
-        color: 'white',
-        padding: '1.5rem 1rem',
-        marginTop: 'auto',
-        fontSize: '0.75rem'
-      }}>
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          textAlign: 'center',
-          opacity: 0.9
-        }}>
-          <p style={{ margin: 0 }}>
-            SWITCH Project - Sustainable and Healthy Diets in Europe | 
-            Funded by the EU's Horizon 2020 programme
-          </p>
-        </div>
-      </footer>
+      {/* The global FooterSwitch component renders the official Switch footer. */}
     </div>
   );
 }

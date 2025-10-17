@@ -4,6 +4,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './config/i18n';
 import './App.css';
 
+import FooterSwitch from './components/FooterSwitch';
+
 // Import screens
 import WelcomeScreen from './screens/WelcomeScreen';
 import ProfileScreen from './screens/ProfileScreen';
@@ -20,18 +22,21 @@ function App() {
   return (
     <Router>
       <div className="App">
-        <Routes>
-          <Route path="/" element={<WelcomeScreen />} />
-          <Route path="/profile" element={<ProfileScreen />} />
-          <Route path="/pretest" element={<PreTestScreen />} />
-          <Route path="/awareness" element={<AwarenessScreen />} />
-          <Route path="/measurement" element={<MeasurementScreen />} />
-          <Route path="/posttest" element={<PostTestScreen />} />
-          <Route path="/results" element={<ResultsScreen />} />
-          <Route path="/dashboard" element={<DashboardScreen />} />
-          <Route path="/admin" element={<AdminScreen />} />
-          <Route path="/config" element={<ConfigScreen />} />
-        </Routes>
+        <main className="App__content">
+          <Routes>
+            <Route path="/" element={<WelcomeScreen />} />
+            <Route path="/profile" element={<ProfileScreen />} />
+            <Route path="/pretest" element={<PreTestScreen />} />
+            <Route path="/awareness" element={<AwarenessScreen />} />
+            <Route path="/measurement" element={<MeasurementScreen />} />
+            <Route path="/posttest" element={<PostTestScreen />} />
+            <Route path="/results" element={<ResultsScreen />} />
+            <Route path="/dashboard" element={<DashboardScreen />} />
+            <Route path="/admin" element={<AdminScreen />} />
+            <Route path="/config" element={<ConfigScreen />} />
+          </Routes>
+        </main>
+        <FooterSwitch />
       </div>
     </Router>
   );
