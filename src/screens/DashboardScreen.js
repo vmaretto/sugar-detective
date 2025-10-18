@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation, useTranslation as useI18n } from 'react-i18next';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Users, Download, RefreshCw, TrendingUp } from 'lucide-react';
+import { Users, Download, RefreshCw, TrendingUp, Trophy, Brain, BarChart3 } from 'lucide-react';
 import Leaderboard from '../components/Leaderboard';
+import InsightsTab from '../components/InsightsTab';
 import { generateRanking } from '../utils/rankingUtils';
 
 const COLORS = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
@@ -15,6 +16,7 @@ const DashboardScreen = () => {
   const [ranking, setRanking] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
+  const [activeTab, setActiveTab] = useState('leaderboard'); // 'leaderboard', 'stats', 'insights'
 
   useEffect(() => {
     fetchData();
@@ -148,46 +150,25 @@ const DashboardScreen = () => {
       'Language',
       'Age',
       'Gender',
-      'Sugar Habits',
-      'Knowledge Avg',
-      'Awareness Avg',
-      'Apple Estimate',
-      'Coca Cola Estimate',
-      'Orange Juice Estimate',
-      'Yogurt Estimate',
-      'Biscuits Estimate',
-      'Cereal Bar Estimate'
+      'Profession',
+      'Consumption',
+      'Total Score',
+      'Knowledge Score',
+      'Awareness Score'
     ];
 
-    const rows = participants.map(p => {
-      const data = p.data || {};
-      const profile = data.profile || {};
-      const part2 = data.part2 || {};
-      const part4 = data.part4 || {};
-      const measurements = data.measurements || {};
-
-      const knowledgeAvg = part2.knowledge1 && part2.knowledge2 && part2.knowledge3
-        ? ((parseInt(part2.knowledge1) + parseInt(part2.knowledge2) + parseInt(part2.knowledge3)) / 3).toFixed(2)
-        : '';
-
-      const awarenessAvg = part4.awareness1 && part4.awareness2 && part4.awareness3
-        ? ((parseInt(part4.awareness1) + parseInt(part4.awareness2) + parseInt(part4.awareness3)) / 3).toFixed(2)
-        : '';
-
+    const rows = ranking.map(p => {
+      const profile = p.profile || {};
       return [
         p.timestamp,
         p.language,
         profile.age || '',
         profile.gender || '',
-        profile.sugarHabits || '',
-        knowledgeAvg,
-        awarenessAvg,
-        measurements.apple || '',
-        measurements.cocaCola || '',
-        measurements.orangeJuice || '',
-        measurements.yogurt || '',
-        measurements.biscuits || '',
-        measurements.cerealBar || ''
+        profile.profession || '',
+        profile.consumption || '',
+        p.totalScore || 0,
+        p.knowledgeScore || 0,
+        p.awarenessScore || 0
       ];
     });
 
@@ -259,7 +240,7 @@ const DashboardScreen = () => {
                 📊 Sugar Detective Dashboard
               </h1>
               <p style={{ color: '#666', fontSize: '1rem' }}>
-                Real-time data analysis
+                {participants.length} {i18n.language === 'it' ? 'partecipanti totali' : 'total participants'}
               </p>
             </div>
 
@@ -306,142 +287,218 @@ const DashboardScreen = () => {
               </button>
             </div>
           </div>
+
+          {/* Tab Navigation */}
+          <div style={{
+            display: 'flex',
+            gap: '1rem',
+            marginTop: '2rem',
+            borderTop: '2px solid #e5e7eb',
+            paddingTop: '1rem'
+          }}>
+            <button
+              onClick={() => setActiveTab('leaderboard')}
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: activeTab === 'leaderboard' ? '#667eea' : 'transparent',
+                color: activeTab === 'leaderboard' ? 'white' : '#667eea',
+                border: '2px solid #667eea',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                transition: 'all 0.2s'
+              }}
+            >
+              <Trophy size={20} />
+              {i18n.language === 'it' ? 'Classifica' : 'Leaderboard'}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('stats')}
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: activeTab === 'stats' ? '#667eea' : 'transparent',
+                color: activeTab === 'stats' ? 'white' : '#667eea',
+                border: '2px solid #667eea',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                transition: 'all 0.2s'
+              }}
+            >
+              <BarChart3 size={20} />
+              {i18n.language === 'it' ? 'Statistiche' : 'Statistics'}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('insights')}
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: activeTab === 'insights' ? '#667eea' : 'transparent',
+                color: activeTab === 'insights' ? 'white' : '#667eea',
+                border: '2px solid #667eea',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                transition: 'all 0.2s'
+              }}
+            >
+              <Brain size={20} />
+              {i18n.language === 'it' ? 'Insights AI' : 'AI Insights'}
+            </button>
+          </div>
         </div>
 
-        {/* Stats Cards */}
-        {stats && (
-          <>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '1.5rem',
-              marginBottom: '2rem'
-            }}>
-              <div style={{
-                background: 'white',
-                borderRadius: '15px',
-                padding: '1.5rem',
-                boxShadow: '0 5px 15px rgba(0,0,0,0.1)',
-                textAlign: 'center'
-              }}>
-                <Users size={32} style={{ color: '#667eea', margin: '0 auto 0.5rem' }} />
-                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#667eea' }}>
-                  {stats.totalParticipants}
-                </div>
-                <div style={{ color: '#666', fontSize: '0.875rem' }}>Total Participants</div>
-              </div>
-
-              <div style={{
-                background: 'white',
-                borderRadius: '15px',
-                padding: '1.5rem',
-                boxShadow: '0 5px 15px rgba(0,0,0,0.1)',
-                textAlign: 'center'
-              }}>
-                <TrendingUp size={32} style={{ color: '#10b981', margin: '0 auto 0.5rem' }} />
-                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981' }}>
-                  {stats.avgKnowledge}/5
-                </div>
-                <div style={{ color: '#666', fontSize: '0.875rem' }}>Avg Knowledge Score</div>
-              </div>
-
-              <div style={{
-                background: 'white',
-                borderRadius: '15px',
-                padding: '1.5rem',
-                boxShadow: '0 5px 15px rgba(0,0,0,0.1)',
-                textAlign: 'center'
-              }}>
-                <TrendingUp size={32} style={{ color: '#f59e0b', margin: '0 auto 0.5rem' }} />
-                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f59e0b' }}>
-                  {stats.avgAwareness}/5
-                </div>
-                <div style={{ color: '#666', fontSize: '0.875rem' }}>Avg Awareness Score</div>
-              </div>
+        {/* Tab Content */}
+        <div style={{
+          background: 'white',
+          borderRadius: '20px',
+          minHeight: '500px',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+        }}>
+          {/* Leaderboard Tab */}
+          {activeTab === 'leaderboard' && (
+            <div style={{ padding: '2rem' }}>
+              <Leaderboard ranking={ranking} language={i18n.language} />
             </div>
+          )}
 
-            {/* Charts */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-              gap: '2rem'
-            }}>
-              {/* Age Distribution */}
+          {/* Statistics Tab */}
+          {activeTab === 'stats' && stats && (
+            <div style={{ padding: '2rem' }}>
+              {/* Stats Cards */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '1.5rem',
+                marginBottom: '2rem'
+              }}>
+                <div style={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  borderRadius: '15px',
+                  padding: '1.5rem',
+                  color: 'white',
+                  textAlign: 'center'
+                }}>
+                  <Users size={32} style={{ margin: '0 auto 0.5rem' }} />
+                  <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
+                    {stats.totalParticipants}
+                  </div>
+                  <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>
+                    {i18n.language === 'it' ? 'Partecipanti Totali' : 'Total Participants'}
+                  </div>
+                </div>
+
+                <div style={{
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  borderRadius: '15px',
+                  padding: '1.5rem',
+                  color: 'white',
+                  textAlign: 'center'
+                }}>
+                  <TrendingUp size={32} style={{ margin: '0 auto 0.5rem' }} />
+                  <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
+                    {ranking.length > 0 
+                      ? (ranking.reduce((sum, p) => sum + (p.totalScore || 0), 0) / ranking.length).toFixed(1)
+                      : 0}
+                  </div>
+                  <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>
+                    {i18n.language === 'it' ? 'Punteggio Medio' : 'Average Score'}
+                  </div>
+                </div>
+
+                <div style={{
+                  background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                  borderRadius: '15px',
+                  padding: '1.5rem',
+                  color: 'white',
+                  textAlign: 'center'
+                }}>
+                  <Trophy size={32} style={{ margin: '0 auto 0.5rem' }} />
+                  <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
+                    {ranking[0]?.totalScore || 0}
+                  </div>
+                  <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>
+                    {i18n.language === 'it' ? 'Miglior Punteggio' : 'Best Score'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Charts */}
               {stats.demographics.age.length > 0 && (
                 <div style={{
-                  background: 'white',
-                  borderRadius: '20px',
-                  padding: '2rem',
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+                  gap: '2rem'
                 }}>
-                  <h3 style={{ marginBottom: '1rem', color: '#667eea' }}>Age Distribution</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={stats.demographics.age}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {stats.demographics.age.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
+                  {/* Age Distribution */}
+                  <div style={{
+                    background: '#f9fafb',
+                    borderRadius: '15px',
+                    padding: '1.5rem'
+                  }}>
+                    <h3 style={{ marginBottom: '1rem', color: '#667eea' }}>
+                      {i18n.language === 'it' ? 'Distribuzione Età' : 'Age Distribution'}
+                    </h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={stats.demographics.age}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {stats.demographics.age.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
 
-              {/* Estimations Accuracy */}
-              {stats.estimations.length > 0 && (
-                <div style={{
-                  background: 'white',
-                  borderRadius: '20px',
-                  padding: '2rem',
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
-                }}>
-                  <h3 style={{ marginBottom: '1rem', color: '#667eea' }}>Avg Sugar Estimations (vs Apple)</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={stats.estimations}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="estimate" fill="#667eea" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {/* Gender Distribution */}
+                  <div style={{
+                    background: '#f9fafb',
+                    borderRadius: '15px',
+                    padding: '1.5rem'
+                  }}>
+                    <h3 style={{ marginBottom: '1rem', color: '#667eea' }}>
+                      {i18n.language === 'it' ? 'Distribuzione Genere' : 'Gender Distribution'}
+                    </h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={stats.demographics.gender}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="value" fill="#667eea" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
               )}
             </div>
-          </>
-        )}
+          )}
 
-        {/* No Data */}
-        {!stats && !loading && (
-          <div style={{
-            background: 'white',
-            borderRadius: '20px',
-            padding: '3rem',
-            textAlign: 'center',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
-          }}>
-            <p style={{ fontSize: '1.25rem', color: '#666' }}>
-              No data available yet. Start collecting responses!
-            </p>
-          </div>
-        )}
-
-	{/* Leaderboard Section */}
-        <div style={{ marginTop: '3rem' }}>
-          <Leaderboard ranking={ranking} language={i18n.language} />
+          {/* Insights Tab */}
+          {activeTab === 'insights' && (
+            <InsightsTab participants={participants} language={i18n.language} />
+          )}
         </div>
-
 
         {/* Back Button */}
         <div style={{ marginTop: '2rem', textAlign: 'center' }}>
@@ -449,16 +506,16 @@ const DashboardScreen = () => {
             onClick={() => navigate('/')}
             style={{
               padding: '1rem 2rem',
-              background: '#6b7280',
-              color: 'white',
-              border: 'none',
+              background: 'white',
+              color: '#667eea',
+              border: '2px solid white',
               borderRadius: '10px',
               cursor: 'pointer',
               fontSize: '1rem',
               fontWeight: '600'
             }}
           >
-            ← Back to Home
+            ← {i18n.language === 'it' ? 'Torna alla Home' : 'Back to Home'}
           </button>
         </div>
       </div>
