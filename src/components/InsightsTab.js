@@ -3,6 +3,27 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Brain, TrendingUp, Sparkles, AlertCircle, History, Clock, Star, Trash2, Settings, Send, MessageCircle, X, Filter } from 'lucide-react';
 
 const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
+  // Add CSS animations
+  React.useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes bounce {
+        0%, 60%, 100% { transform: translateY(0); }
+        30% { transform: translateY(-10px); }
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, []);
+
   // Filter out Thursday participants (test data)
   const participants = allParticipants.filter(p => {
     const date = new Date(p.timestamp);
@@ -138,7 +159,9 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
       timestamp: new Date().toISOString()
     };
     
-    setChatMessages(prev => [...prev, userMessage]);
+    const newMessages = [...chatMessages, userMessage];
+    setChatMessages(newMessages);
+    const currentInput = chatInput; // Save current input
     setChatInput('');
     setChatLoading(true);
     
@@ -158,7 +181,7 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          message: chatInput,
+          message: currentInput, // Use the saved input
           context: aggregatedData,
           language,
           conversationHistory: chatMessages.slice(-10) // Send last 10 messages for context
@@ -166,7 +189,8 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get response');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to get response');
       }
 
       const data = await response.json();
@@ -177,7 +201,7 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
         timestamp: new Date().toISOString()
       };
       
-      const updatedMessages = [...chatMessages, userMessage, assistantMessage];
+      const updatedMessages = [...newMessages, assistantMessage];
       setChatMessages(updatedMessages);
       
       // Save chat history
@@ -191,10 +215,11 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
         content: language === 'it' 
           ? '❌ Mi dispiace, non riesco a rispondere in questo momento. Riprova tra poco.'
           : '❌ Sorry, I cannot respond at this moment. Please try again later.',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        isError: true
       };
       
-      setChatMessages(prev => [...prev, errorMessage]);
+      setChatMessages([...newMessages, errorMessage]);
     } finally {
       setChatLoading(false);
     }
@@ -780,9 +805,10 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
           position: 'fixed',
           bottom: '2rem',
           right: '2rem',
-          width: '400px',
+          width: '420px',
           maxWidth: '90vw',
-          height: '500px',
+          height: '600px',
+          maxHeight: '80vh',
           background: 'white',
           borderRadius: '20px',
           boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
@@ -816,8 +842,11 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
                   borderRadius: '5px',
                   color: 'white',
                   cursor: 'pointer',
-                  padding: '0.25rem 0.5rem'
+                  padding: '0.25rem 0.5rem',
+                  transition: 'background 0.2s'
                 }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
               >
                 <Trash2 size={16} />
               </button>
@@ -829,8 +858,11 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
                   borderRadius: '5px',
                   color: 'white',
                   cursor: 'pointer',
-                  padding: '0.25rem 0.5rem'
+                  padding: '0.25rem 0.5rem',
+                  transition: 'background 0.2s'
                 }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
               >
                 <X size={16} />
               </button>
@@ -844,18 +876,80 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
             padding: '1rem',
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.75rem'
+            gap: '0.75rem',
+            background: '#fafafa'
           }}>
             {chatMessages.length === 0 && (
               <div style={{
                 textAlign: 'center',
-                color: '#9ca3af',
-                padding: '2rem',
-                fontSize: '0.875rem'
+                padding: '2rem 1rem'
               }}>
-                {language === 'it' 
-                  ? '💬 Chiedi qualsiasi cosa sui dati e gli insights...'
-                  : '💬 Ask anything about the data and insights...'}
+                <p style={{
+                  color: '#667eea',
+                  fontWeight: '600',
+                  marginBottom: '1rem',
+                  fontSize: '1rem'
+                }}>
+                  {language === 'it' 
+                    ? '👋 Ciao! Sono Claude, il tuo assistente AI'
+                    : '👋 Hi! I\'m Claude, your AI assistant'}
+                </p>
+                <p style={{
+                  color: '#9ca3af',
+                  fontSize: '0.875rem',
+                  marginBottom: '1.5rem'
+                }}>
+                  {language === 'it' 
+                    ? 'Posso aiutarti ad analizzare i dati in modo approfondito. Ecco alcune domande che puoi farmi:'
+                    : 'I can help you analyze the data in depth. Here are some questions you can ask:'}
+                </p>
+                
+                {/* Example questions */}
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem',
+                  textAlign: 'left'
+                }}>
+                  {[
+                    language === 'it' ? "Quali sono le differenze tra uomini e donne?" : "What are the differences between men and women?",
+                    language === 'it' ? "Chi è più preciso per fascia d'età?" : "Who is more accurate by age group?",
+                    language === 'it' ? "Quali alimenti vengono più sottostimati?" : "Which foods are most underestimated?",
+                    language === 'it' ? "C'è correlazione tra professione e precisione?" : "Is there a correlation between profession and accuracy?",
+                    language === 'it' ? "Analizza i pattern temporali" : "Analyze temporal patterns"
+                  ].map((question, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setChatInput(question);
+                        setTimeout(() => sendChatMessage(), 100);
+                      }}
+                      style={{
+                        padding: '0.5rem 0.75rem',
+                        background: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '10px',
+                        textAlign: 'left',
+                        fontSize: '0.813rem',
+                        color: '#4b5563',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = '#667eea';
+                        e.currentTarget.style.color = '#667eea';
+                        e.currentTarget.style.transform = 'translateX(4px)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = '#e5e7eb';
+                        e.currentTarget.style.color = '#4b5563';
+                        e.currentTarget.style.transform = 'translateX(0)';
+                      }}
+                    >
+                      💡 {question}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
             
@@ -864,19 +958,29 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
                 key={idx}
                 style={{
                   display: 'flex',
-                  justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start'
+                  justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                  animation: 'fadeIn 0.3s ease-in'
                 }}
               >
                 <div style={{
-                  maxWidth: '80%',
-                  padding: '0.75rem',
-                  borderRadius: '15px',
+                  maxWidth: '85%',
+                  padding: '0.75rem 1rem',
+                  borderRadius: msg.role === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
                   background: msg.role === 'user' 
                     ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                    : '#f3f4f6',
-                  color: msg.role === 'user' ? 'white' : '#374151'
+                    : msg.isError ? '#fef2f2' : 'white',
+                  color: msg.role === 'user' ? 'white' : msg.isError ? '#dc2626' : '#374151',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  border: msg.role === 'assistant' && !msg.isError ? '1px solid #e5e7eb' : 'none'
                 }}>
-                  <div style={{ fontSize: '0.875rem' }}>{msg.content}</div>
+                  <div style={{ 
+                    fontSize: '0.875rem',
+                    lineHeight: '1.5',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word'
+                  }}>
+                    {msg.content}
+                  </div>
                   <div style={{
                     fontSize: '0.625rem',
                     opacity: 0.7,
@@ -894,14 +998,38 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
                 justifyContent: 'flex-start'
               }}>
                 <div style={{
-                  padding: '0.75rem',
-                  borderRadius: '15px',
-                  background: '#f3f4f6',
-                  color: '#9ca3af'
+                  padding: '0.75rem 1rem',
+                  borderRadius: '18px 18px 18px 4px',
+                  background: 'white',
+                  border: '1px solid #e5e7eb',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
                 }}>
-                  <span style={{ animation: 'pulse 1.5s infinite' }}>
-                    Claude sta pensando...
-                  </span>
+                  <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                    <span style={{ 
+                      animation: 'bounce 1.4s ease-in-out infinite',
+                      display: 'inline-block',
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      background: '#667eea'
+                    }}></span>
+                    <span style={{ 
+                      animation: 'bounce 1.4s ease-in-out 0.2s infinite',
+                      display: 'inline-block',
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      background: '#764ba2'
+                    }}></span>
+                    <span style={{ 
+                      animation: 'bounce 1.4s ease-in-out 0.4s infinite',
+                      display: 'inline-block',
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      background: '#667eea'
+                    }}></span>
+                  </div>
                 </div>
               </div>
             )}
@@ -913,40 +1041,65 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
           <div style={{
             padding: '1rem',
             borderTop: '2px solid #e5e7eb',
-            display: 'flex',
-            gap: '0.5rem'
+            background: 'white',
+            borderRadius: '0 0 20px 20px'
           }}>
-            <input
-              type="text"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
-              placeholder={language === 'it' ? 'Scrivi una domanda...' : 'Type a question...'}
-              style={{
-                flex: 1,
-                padding: '0.5rem',
-                border: '2px solid #e5e7eb',
-                borderRadius: '10px',
-                outline: 'none'
-              }}
-              disabled={chatLoading}
-            />
-            <button
-              onClick={sendChatMessage}
-              disabled={chatLoading || !chatInput.trim()}
-              style={{
-                padding: '0.5rem 1rem',
-                background: chatLoading || !chatInput.trim() ? '#e5e7eb' : '#667eea',
-                color: chatLoading || !chatInput.trim() ? '#9ca3af' : 'white',
-                border: 'none',
-                borderRadius: '10px',
-                cursor: chatLoading || !chatInput.trim() ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center'
-              }}
-            >
-              <Send size={18} />
-            </button>
+            <div style={{
+              display: 'flex',
+              gap: '0.5rem'
+            }}>
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendChatMessage();
+                  }
+                }}
+                placeholder={language === 'it' ? 'Scrivi una domanda...' : 'Type a question...'}
+                style={{
+                  flex: 1,
+                  padding: '0.625rem 0.875rem',
+                  border: '2px solid #e5e7eb',
+                  borderRadius: '12px',
+                  outline: 'none',
+                  fontSize: '0.875rem',
+                  transition: 'border-color 0.2s'
+                }}
+                onFocus={(e) => e.currentTarget.style.borderColor = '#667eea'}
+                onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
+                disabled={chatLoading}
+              />
+              <button
+                onClick={sendChatMessage}
+                disabled={chatLoading || !chatInput.trim()}
+                style={{
+                  padding: '0.625rem 1rem',
+                  background: chatLoading || !chatInput.trim() ? '#e5e7eb' : '#667eea',
+                  color: chatLoading || !chatInput.trim() ? '#9ca3af' : 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  cursor: chatLoading || !chatInput.trim() ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  if (!chatLoading && chatInput.trim()) {
+                    e.currentTarget.style.background = '#764ba2';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!chatLoading && chatInput.trim()) {
+                    e.currentTarget.style.background = '#667eea';
+                  }
+                }}
+              >
+                <Send size={18} />
+              </button>
+            </div>
           </div>
         </div>
       )}
