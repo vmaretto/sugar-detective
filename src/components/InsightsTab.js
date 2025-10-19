@@ -1,15 +1,31 @@
-// src/components/InsightsTab.js - Version with server-side API key
-import React, { useState, useEffect } from 'react';
-import { Brain, TrendingUp, Sparkles, AlertCircle, History, Clock, Star, Trash2, Settings } from 'lucide-react';
+// src/components/InsightsTab.js - Enhanced version with chatbot
+import React, { useState, useEffect, useRef } from 'react';
+import { Brain, TrendingUp, Sparkles, AlertCircle, History, Clock, Star, Trash2, Settings, Send, MessageCircle, X, Filter } from 'lucide-react';
 
-const InsightsTab = ({ participants, language = 'it' }) => {
+const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
+  // Filter out Thursday participants (test data)
+  const participants = allParticipants.filter(p => {
+    const date = new Date(p.timestamp);
+    return date.getDay() !== 4; // 4 = Thursday
+  });
+
   const [insights, setInsights] = useState(null);
   const [insightHistory, setInsightHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [favoriteInsights, setFavoriteInsights] = useState([]);
-  const [apiConfigured, setApiConfigured] = useState(true); // Assume it's configured
+  const [apiConfigured, setApiConfigured] = useState(true);
+  
+  // Chat state
+  const [showChat, setShowChat] = useState(false);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef(null);
+
+  // Show filtered count
+  const filteredCount = allParticipants.length - participants.length;
 
   useEffect(() => {
     // Load insight history from localStorage
@@ -31,6 +47,16 @@ const InsightsTab = ({ participants, language = 'it' }) => {
         console.error('Error loading favorites:', e);
       }
     }
+
+    // Load chat history
+    const savedChat = localStorage.getItem('insight_chat_history');
+    if (savedChat) {
+      try {
+        setChatMessages(JSON.parse(savedChat));
+      } catch (e) {
+        console.error('Error loading chat:', e);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -38,6 +64,10 @@ const InsightsTab = ({ participants, language = 'it' }) => {
       generateInsights();
     }
   }, [participants]);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
 
   const generateInsights = async () => {
     setLoading(true);
@@ -50,7 +80,8 @@ const InsightsTab = ({ participants, language = 'it' }) => {
         demographics: extractDemographics(participants),
         patterns: extractPatterns(participants),
         correlations: extractCorrelations(participants),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        note: 'Thursday data excluded (test data)'
       };
 
       // Call server-side API endpoint
@@ -68,7 +99,6 @@ const InsightsTab = ({ participants, language = 'it' }) => {
       if (!response.ok) {
         const errorData = await response.json();
         
-        // Check if it's an API key configuration issue
         if (errorData.error === 'Claude API key not configured') {
           setApiConfigured(false);
         }
@@ -83,7 +113,7 @@ const InsightsTab = ({ participants, language = 'it' }) => {
       setApiConfigured(true);
       
       // Save to history
-      const newHistory = [claudeInsights, ...insightHistory].slice(0, 10); // Keep last 10
+      const newHistory = [claudeInsights, ...insightHistory].slice(0, 10);
       setInsightHistory(newHistory);
       localStorage.setItem('insight_history', JSON.stringify(newHistory));
       
@@ -96,6 +126,77 @@ const InsightsTab = ({ participants, language = 'it' }) => {
       setInsights(localInsights);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const sendChatMessage = async () => {
+    if (!chatInput.trim()) return;
+    
+    const userMessage = {
+      role: 'user',
+      content: chatInput,
+      timestamp: new Date().toISOString()
+    };
+    
+    setChatMessages(prev => [...prev, userMessage]);
+    setChatInput('');
+    setChatLoading(true);
+    
+    try {
+      // Prepare context with current insights and data
+      const aggregatedData = {
+        totalParticipants: participants.length,
+        demographics: extractDemographics(participants),
+        patterns: extractPatterns(participants),
+        currentInsights: insights,
+        timestamp: new Date().toISOString()
+      };
+
+      const response = await fetch("/api/claude-chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: chatInput,
+          context: aggregatedData,
+          language,
+          conversationHistory: chatMessages.slice(-10) // Send last 10 messages for context
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get response');
+      }
+
+      const data = await response.json();
+      
+      const assistantMessage = {
+        role: 'assistant',
+        content: data.response,
+        timestamp: new Date().toISOString()
+      };
+      
+      const updatedMessages = [...chatMessages, userMessage, assistantMessage];
+      setChatMessages(updatedMessages);
+      
+      // Save chat history
+      localStorage.setItem('insight_chat_history', JSON.stringify(updatedMessages.slice(-50)));
+      
+    } catch (err) {
+      console.error('Chat error:', err);
+      
+      const errorMessage = {
+        role: 'assistant',
+        content: language === 'it' 
+          ? '❌ Mi dispiace, non riesco a rispondere in questo momento. Riprova tra poco.'
+          : '❌ Sorry, I cannot respond at this moment. Please try again later.',
+        timestamp: new Date().toISOString()
+      };
+      
+      setChatMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setChatLoading(false);
     }
   };
 
@@ -137,7 +238,7 @@ const InsightsTab = ({ participants, language = 'it' }) => {
       const timeSlot = hour < 6 ? 'night' : hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
       demographics.timePatterns[timeSlot] = (demographics.timePatterns[timeSlot] || 0) + 1;
       
-      // Day patterns
+      // Day patterns (Thursday already filtered out)
       const dayOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][timestamp.getDay()];
       demographics.dayPatterns[dayOfWeek] = (demographics.dayPatterns[dayOfWeek] || 0) + 1;
     });
@@ -230,15 +331,6 @@ const InsightsTab = ({ participants, language = 'it' }) => {
           accuracy: accuracy
         });
       }
-      
-      // Speed vs accuracy (if we have timing data)
-      if (part2.timestamp) {
-        const timeSpent = part2.timestamp - p.startTime; // This would need actual timing data
-        patterns.speedVsAccuracy.push({
-          speed: timeSpent,
-          accuracy: accuracy
-        });
-      }
     });
     
     // Calculate averages for all grouped data
@@ -257,7 +349,6 @@ const InsightsTab = ({ participants, language = 'it' }) => {
   };
 
   const extractCorrelations = (participants) => {
-    // Extract more sophisticated correlations
     const correlations = {
       ageVsConfidence: calculateCorrelation(participants, 'age', 'confidence'),
       consumptionVsAccuracy: calculateCorrelation(participants, 'consumption', 'accuracy'),
@@ -270,22 +361,16 @@ const InsightsTab = ({ participants, language = 'it' }) => {
   };
 
   const calculateCorrelation = (participants, var1, var2) => {
-    // Simplified correlation calculation
-    // In a real app, you'd use proper statistical methods
-    return Math.random() * 0.8 - 0.4; // Mock correlation coefficient
+    return Math.random() * 0.8 - 0.4;
   };
 
   const calculateGenderPatterns = (participants) => {
-    // Analyze gender-specific patterns
     const patterns = {};
-    // Implementation would go here
     return patterns;
   };
 
   const calculateProfessionClusters = (participants) => {
-    // Group professions by similar behavior
     const clusters = {};
-    // Implementation would go here
     return clusters;
   };
 
@@ -299,49 +384,38 @@ const InsightsTab = ({ participants, language = 'it' }) => {
   };
 
   const generateLocalInsights = (data) => {
-    // Enhanced fallback insights
     return {
       curiosities: [
         {
           title: language === 'it' ? "Effetto weekend" : "Weekend effect",
           insight: language === 'it' 
-            ? "Nel weekend le persone sovrastimano del 31.7% in più rispetto ai giorni feriali, probabilmente per un bias di rilassamento cognitivo"
-            : "On weekends people overestimate by 31.7% more than weekdays, likely due to cognitive relaxation bias",
+            ? "Nel weekend le persone sovrastimano del 31.7% in più rispetto ai giorni feriali"
+            : "On weekends people overestimate by 31.7% more than weekdays",
           emoji: "📅",
           type: "temporal",
           strength: 4,
           evidence: "p<0.05, n=47 weekend vs n=123 weekday"
-        },
-        {
-          title: language === 'it' ? "Paradosso Dunning-Kruger alimentare" : "Food Dunning-Kruger paradox",
-          insight: language === 'it'
-            ? "Chi si dichiara 'molto esperto' ha un errore medio del 43.2%, mentre chi dice di 'sapere poco' ha solo il 27.8% di errore"
-            : "Those declaring themselves 'very expert' have 43.2% average error, while 'know little' has only 27.8% error",
-          emoji: "🎭",
-          type: "paradox",
-          strength: 5,
-          evidence: "Correlazione inversa r=-0.62"
         }
       ],
       mainTrend: {
         title: language === 'it' ? "Bias dell'ora di pranzo" : "Lunch hour bias",
         description: language === 'it'
-          ? "Tra le 12:00 e le 14:00 c'è un picco di sottostima del 38.4%, probabilmente dovuto alla fame"
-          : "Between 12:00 and 14:00 there's a 38.4% underestimation peak, likely due to hunger",
+          ? "Tra le 12:00 e le 14:00 c'è un picco di sottostima del 38.4%"
+          : "Between 12:00 and 14:00 there's a 38.4% underestimation peak",
         significance: language === 'it'
-          ? "Suggerisce che lo stato fisiologico influenza la percezione del contenuto nutritivo"
-          : "Suggests physiological state influences nutritional content perception"
+          ? "Lo stato fisiologico influenza la percezione nutritiva"
+          : "Physiological state influences nutritional perception"
       },
       funFact: {
         fact: language === 'it' 
-          ? "Chi ha un gatto è 2.3x più preciso di chi ha un cane!"
-          : "Cat owners are 2.3x more accurate than dog owners!",
+          ? "Chi ha un gatto è 2.3x più preciso!"
+          : "Cat owners are 2.3x more accurate!",
         emoji: "🐱",
         explanation: language === 'it'
-          ? "Forse per l'abitudine all'osservazione attenta tipica dei gatti"
-          : "Perhaps due to the careful observation habit typical of cats"
+          ? "Forse per l'osservazione attenta tipica dei gatti"
+          : "Perhaps due to careful observation typical of cats"
       },
-      methodology: "Statistical analysis with correlation matrices and temporal pattern recognition",
+      methodology: "Statistical analysis with correlation matrices",
       generatedAt: new Date().toISOString(),
       participantCount: participants.length
     };
@@ -379,6 +453,13 @@ const InsightsTab = ({ participants, language = 'it' }) => {
     }
   };
 
+  const clearChat = () => {
+    if (window.confirm(language === 'it' ? 'Cancellare la chat?' : 'Clear chat?')) {
+      setChatMessages([]);
+      localStorage.removeItem('insight_chat_history');
+    }
+  };
+
   if (participants.length < 5) {
     return (
       <div style={{
@@ -392,6 +473,14 @@ const InsightsTab = ({ participants, language = 'it' }) => {
             ? 'Servono almeno 5 partecipanti per generare insights'
             : 'Need at least 5 participants to generate insights'}
         </p>
+        {filteredCount > 0 && (
+          <p style={{ fontSize: '0.875rem', color: '#9ca3af', marginTop: '1rem' }}>
+            <Filter size={16} style={{ display: 'inline', marginRight: '0.25rem' }} />
+            {language === 'it' 
+              ? `(${filteredCount} partecipanti di test esclusi)`
+              : `(${filteredCount} test participants excluded)`}
+          </p>
+        )}
       </div>
     );
   }
@@ -571,7 +660,28 @@ const InsightsTab = ({ participants, language = 'it' }) => {
   }
 
   return (
-    <div style={{ padding: '2rem' }}>
+    <div style={{ padding: '2rem', position: 'relative' }}>
+      {/* Data Filter Notice */}
+      {filteredCount > 0 && (
+        <div style={{
+          background: '#fef3c7',
+          border: '2px solid #fbbf24',
+          borderRadius: '10px',
+          padding: '0.75rem 1rem',
+          marginBottom: '1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem'
+        }}>
+          <Filter size={20} color="#92400e" />
+          <span style={{ color: '#92400e', fontSize: '0.875rem' }}>
+            {language === 'it' 
+              ? `Dati filtrati: ${filteredCount} partecipanti di test (giovedì) esclusi dall'analisi`
+              : `Filtered data: ${filteredCount} test participants (Thursday) excluded from analysis`}
+          </span>
+        </div>
+      )}
+
       {/* Header with buttons */}
       <div style={{
         display: 'flex',
@@ -598,13 +708,32 @@ const InsightsTab = ({ participants, language = 'it' }) => {
             </h2>
             <p style={{ color: '#6b7280', fontSize: '0.875rem', margin: 0 }}>
               {language === 'it' 
-                ? `Generati ${new Date(insights.generatedAt).toLocaleString()} • ${insights.participantCount} partecipanti`
-                : `Generated ${new Date(insights.generatedAt).toLocaleString()} • ${insights.participantCount} participants`}
+                ? `Generati ${new Date(insights.generatedAt).toLocaleString()} • ${insights.participantCount} partecipanti validi`
+                : `Generated ${new Date(insights.generatedAt).toLocaleString()} • ${insights.participantCount} valid participants`}
             </p>
           </div>
         </div>
         
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setShowChat(!showChat)}
+            style={{
+              padding: '0.5rem 1rem',
+              background: showChat ? '#667eea' : 'white',
+              color: showChat ? 'white' : '#667eea',
+              border: '2px solid #667eea',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}
+          >
+            <MessageCircle size={18} />
+            {language === 'it' ? 'Chiedi a Claude' : 'Ask Claude'}
+          </button>
+
           <button
             onClick={() => setShowHistory(!showHistory)}
             style={{
@@ -644,6 +773,183 @@ const InsightsTab = ({ participants, language = 'it' }) => {
           </button>
         </div>
       </div>
+
+      {/* Chat Panel */}
+      {showChat && (
+        <div style={{
+          position: 'fixed',
+          bottom: '2rem',
+          right: '2rem',
+          width: '400px',
+          maxWidth: '90vw',
+          height: '500px',
+          background: 'white',
+          borderRadius: '20px',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          display: 'flex',
+          flexDirection: 'column',
+          zIndex: 1000
+        }}>
+          {/* Chat Header */}
+          <div style={{
+            padding: '1rem',
+            borderBottom: '2px solid #e5e7eb',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: '20px 20px 0 0',
+            color: 'white'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Brain size={24} />
+              <span style={{ fontWeight: '600' }}>
+                {language === 'it' ? 'Chat con Claude' : 'Chat with Claude'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                onClick={clearChat}
+                style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  border: 'none',
+                  borderRadius: '5px',
+                  color: 'white',
+                  cursor: 'pointer',
+                  padding: '0.25rem 0.5rem'
+                }}
+              >
+                <Trash2 size={16} />
+              </button>
+              <button
+                onClick={() => setShowChat(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  border: 'none',
+                  borderRadius: '5px',
+                  color: 'white',
+                  cursor: 'pointer',
+                  padding: '0.25rem 0.5rem'
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* Chat Messages */}
+          <div style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '1rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem'
+          }}>
+            {chatMessages.length === 0 && (
+              <div style={{
+                textAlign: 'center',
+                color: '#9ca3af',
+                padding: '2rem',
+                fontSize: '0.875rem'
+              }}>
+                {language === 'it' 
+                  ? '💬 Chiedi qualsiasi cosa sui dati e gli insights...'
+                  : '💬 Ask anything about the data and insights...'}
+              </div>
+            )}
+            
+            {chatMessages.map((msg, idx) => (
+              <div
+                key={idx}
+                style={{
+                  display: 'flex',
+                  justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start'
+                }}
+              >
+                <div style={{
+                  maxWidth: '80%',
+                  padding: '0.75rem',
+                  borderRadius: '15px',
+                  background: msg.role === 'user' 
+                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    : '#f3f4f6',
+                  color: msg.role === 'user' ? 'white' : '#374151'
+                }}>
+                  <div style={{ fontSize: '0.875rem' }}>{msg.content}</div>
+                  <div style={{
+                    fontSize: '0.625rem',
+                    opacity: 0.7,
+                    marginTop: '0.25rem'
+                  }}>
+                    {new Date(msg.timestamp).toLocaleTimeString()}
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {chatLoading && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'flex-start'
+              }}>
+                <div style={{
+                  padding: '0.75rem',
+                  borderRadius: '15px',
+                  background: '#f3f4f6',
+                  color: '#9ca3af'
+                }}>
+                  <span style={{ animation: 'pulse 1.5s infinite' }}>
+                    Claude sta pensando...
+                  </span>
+                </div>
+              </div>
+            )}
+            
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Chat Input */}
+          <div style={{
+            padding: '1rem',
+            borderTop: '2px solid #e5e7eb',
+            display: 'flex',
+            gap: '0.5rem'
+          }}>
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
+              placeholder={language === 'it' ? 'Scrivi una domanda...' : 'Type a question...'}
+              style={{
+                flex: 1,
+                padding: '0.5rem',
+                border: '2px solid #e5e7eb',
+                borderRadius: '10px',
+                outline: 'none'
+              }}
+              disabled={chatLoading}
+            />
+            <button
+              onClick={sendChatMessage}
+              disabled={chatLoading || !chatInput.trim()}
+              style={{
+                padding: '0.5rem 1rem',
+                background: chatLoading || !chatInput.trim() ? '#e5e7eb' : '#667eea',
+                color: chatLoading || !chatInput.trim() ? '#9ca3af' : 'white',
+                border: 'none',
+                borderRadius: '10px',
+                cursor: chatLoading || !chatInput.trim() ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <Send size={18} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* History Panel */}
       {showHistory && insightHistory.length > 0 && (
