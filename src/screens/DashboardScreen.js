@@ -375,6 +375,425 @@ const DashboardScreen = () => {
           {/* Statistics Tab */}
           {activeTab === 'stats' && stats && (
             <div style={{ padding: '2rem' }}>
+              {/* Key Metrics Cards */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '1.5rem',
+                marginBottom: '3rem'
+              }}>
+                <div style={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  borderRadius: '15px',
+                  padding: '1.5rem',
+                  color: 'white',
+                  textAlign: 'center'
+                }}>
+                  <Users size={32} style={{ margin: '0 auto 0.5rem' }} />
+                  <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
+                    {stats.totalParticipants}
+                  </div>
+                  <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>
+                    {i18n.language === 'it' ? 'Partecipanti Totali' : 'Total Participants'}
+                  </div>
+                </div>
+
+                <div style={{
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  borderRadius: '15px',
+                  padding: '1.5rem',
+                  color: 'white',
+                  textAlign: 'center'
+                }}>
+                  <Trophy size={32} style={{ margin: '0 auto 0.5rem' }} />
+                  <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
+                    {stats.avgTotalScore}
+                  </div>
+                  <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>
+                    {i18n.language === 'it' ? 'Punteggio Medio' : 'Average Score'}
+                  </div>
+                </div>
+
+                <div style={{
+                  background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                  borderRadius: '15px',
+                  padding: '1.5rem',
+                  color: 'white',
+                  textAlign: 'center'
+                }}>
+                  <Brain size={32} style={{ margin: '0 auto 0.5rem' }} />
+                  <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
+                    {stats.avgKnowledgeScore}
+                  </div>
+                  <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>
+                    {i18n.language === 'it' ? 'Conoscenza Media' : 'Avg Knowledge'}
+                  </div>
+                </div>
+
+                <div style={{
+                  background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                  borderRadius: '15px',
+                  padding: '1.5rem',
+                  color: 'white',
+                  textAlign: 'center'
+                }}>
+                  <TrendingUp size={32} style={{ margin: '0 auto 0.5rem' }} />
+                  <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
+                    {stats.avgAwarenessScore}
+                  </div>
+                  <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>
+                    {i18n.language === 'it' ? 'Consapevolezza Media' : 'Avg Awareness'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Demographics Charts */}
+              <h3 style={{ 
+                fontSize: '1.5rem', 
+                fontWeight: 'bold', 
+                color: '#667eea', 
+                marginBottom: '2rem',
+                textAlign: 'center'
+              }}>
+                {i18n.language === 'it' ? '📊 Analisi Demografiche' : '📊 Demographic Analysis'}
+              </h3>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+                gap: '2rem',
+                marginBottom: '3rem'
+              }}>
+                {/* Age Distribution */}
+                <div style={{
+                  background: '#f9fafb',
+                  borderRadius: '15px',
+                  padding: '1.5rem',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                }}>
+                  <h4 style={{ marginBottom: '1rem', color: '#667eea' }}>
+                    {i18n.language === 'it' ? '👥 Distribuzione per Età' : '👥 Age Distribution'}
+                  </h4>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={stats.demographics.age}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="ageGroup" />
+                      <YAxis />
+                      <Tooltip formatter={(value) => [`${value} (${((value/stats.totalParticipants)*100).toFixed(1)}%)`, 'Partecipanti']} />
+                      <Bar dataKey="value" fill="#667eea" radius={[8, 8, 0, 0]}>
+                        {stats.demographics.age.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Gender Distribution */}
+                <div style={{
+                  background: '#f9fafb',
+                  borderRadius: '15px',
+                  padding: '1.5rem',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                }}>
+                  <h4 style={{ marginBottom: '1rem', color: '#667eea' }}>
+                    {i18n.language === 'it' ? '⚧ Distribuzione per Genere' : '⚧ Gender Distribution'}
+                  </h4>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={stats.demographics.gender}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ gender, percentage }) => `${gender}: ${percentage}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {stats.demographics.gender.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Profession Distribution */}
+                <div style={{
+                  background: '#f9fafb',
+                  borderRadius: '15px',
+                  padding: '1.5rem',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                }}>
+                  <h4 style={{ marginBottom: '1rem', color: '#667eea' }}>
+                    {i18n.language === 'it' ? '💼 Distribuzione per Professione' : '💼 Profession Distribution'}
+                  </h4>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={stats.demographics.profession} layout="horizontal">
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number" />
+                      <YAxis dataKey="profession" type="category" />
+                      <Tooltip />
+                      <Bar dataKey="value" fill="#8b5cf6" radius={[0, 8, 8, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Consumption Habits */}
+                <div style={{
+                  background: '#f9fafb',
+                  borderRadius: '15px',
+                  padding: '1.5rem',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                }}>
+                  <h4 style={{ marginBottom: '1rem', color: '#667eea' }}>
+                    {i18n.language === 'it' ? '🥗 Abitudini di Consumo' : '🥗 Consumption Habits'}
+                  </h4>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={stats.demographics.consumption}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ habit, percentage }) => `${habit}: ${percentage}%`}
+                        outerRadius={80}
+                        fill="#10b981"
+                        dataKey="value"
+                      >
+                        {stats.demographics.consumption.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Temporal Patterns */}
+              <h3 style={{ 
+                fontSize: '1.5rem', 
+                fontWeight: 'bold', 
+                color: '#667eea', 
+                marginBottom: '2rem',
+                textAlign: 'center'
+              }}>
+                {i18n.language === 'it' ? '⏰ Pattern Temporali' : '⏰ Temporal Patterns'}
+              </h3>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+                gap: '2rem'
+              }}>
+                {/* Time of Day Performance */}
+                {stats.timePatterns && stats.timePatterns.length > 0 && (
+                  <div style={{
+                    background: '#f9fafb',
+                    borderRadius: '15px',
+                    padding: '1.5rem',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                  }}>
+                    <h4 style={{ marginBottom: '1rem', color: '#667eea' }}>
+                      {i18n.language === 'it' ? '🌅 Performance per Ora del Giorno' : '🌅 Performance by Time of Day'}
+                    </h4>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <BarChart data={stats.timePatterns}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="timeSlot" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [`${value}`, 'Punteggio Medio']} />
+                        <Bar dataKey="value" fill="#f59e0b" radius={[8, 8, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
+                {/* Day of Week Performance */}
+                {stats.dayPatterns && stats.dayPatterns.length > 0 && (
+                  <div style={{
+                    background: '#f9fafb',
+                    borderRadius: '15px',
+                    padding: '1.5rem',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                  }}>
+                    <h4 style={{ marginBottom: '1rem', color: '#667eea' }}>
+                      {i18n.language === 'it' ? '📅 Performance per Giorno' : '📅 Performance by Day'}
+                    </h4>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <BarChart data={stats.dayPatterns}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="day" angle={-45} textAnchor="end" height={80} />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [`${value}`, 'Punteggio Medio']} />
+                        <Bar dataKey="value" fill="#10b981" radius={[8, 8, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+
+              {/* Summary Stats */}
+              <div style={{
+                marginTop: '3rem',
+                padding: '2rem',
+                background: 'linear-gradient(135deg, #667eea15 0%, #764ba215 100%)',
+                borderRadius: '15px',
+                border: '2px solid #667eea'
+              }}>
+                <h4 style={{
+                  fontSize: '1.25rem',
+                  fontWeight: 'bold',
+                  color: '#667eea',
+                  marginBottom: '1rem',
+                  textAlign: 'center'
+                }}>
+                  {i18n.language === 'it' ? '📈 Riepilogo Statistiche' : '📈 Statistics Summary'}
+                </h4>
+                
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: '1rem',
+                  textAlign: 'center'
+                }}>
+                  <div>
+                    <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.25rem' }}>
+                      {i18n.language === 'it' ? 'Età Media' : 'Average Age'}
+                    </div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#667eea' }}>
+                      {(() => {
+                        let totalAge = 0;
+                        let count = 0;
+                        participants.forEach(p => {
+                          if (p.data?.profile?.age) {
+                            totalAge += parseInt(p.data.profile.age);
+                            count++;
+                          }
+                        });
+                        return count > 0 ? Math.round(totalAge / count) : 'N/A';
+                      })()}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.25rem' }}>
+                      {i18n.language === 'it' ? 'Top Score' : 'Top Score'}
+                    </div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#10b981' }}>
+                      {ranking[0]?.totalScore || 0}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.25rem' }}>
+                      {i18n.language === 'it' ? 'Partecipazioni Oggi' : 'Participations Today'}
+                    </div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#f59e0b' }}>
+                      {(() => {
+                        const today = new Date().toDateString();
+                        return participants.filter(p => 
+                          new Date(p.timestamp).toDateString() === today
+                        ).length;
+                      })()}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.25rem' }}>
+                      {i18n.language === 'it' ? 'Tasso Completamento' : 'Completion Rate'}
+                    </div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#8b5cf6' }}>
+                      {(() => {
+                        const completed = participants.filter(p => 
+                          p.data?.measurements && Object.keys(p.data.measurements).length > 0
+                        ).length;
+                        return participants.length > 0 
+                          ? `${((completed / participants.length) * 100).toFixed(0)}%`
+                          : '0%';
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Insights Tab */}
+          {activeTab === 'insights' && (
+            <InsightsTab participants={participants} language={i18n.language} />
+          )}
+        </div>
+
+        {/* Back Button */}
+        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+          <button
+            onClick={() => navigate('/')}
+            style={{
+              padding: '1rem 2rem',
+              background: 'white',
+              color: '#667eea',
+              border: '2px solid white',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              fontWeight: '600'
+            }}
+          >
+            ← {i18n.language === 'it' ? 'Torna alla Home' : 'Back to Home'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default DashboardScreen;
+              {i18n.language === 'it' ? 'Statistiche' : 'Statistics'}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('insights')}
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: activeTab === 'insights' ? '#667eea' : 'transparent',
+                color: activeTab === 'insights' ? 'white' : '#667eea',
+                border: '2px solid #667eea',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                transition: 'all 0.2s'
+              }}
+            >
+              <Brain size={20} />
+              {i18n.language === 'it' ? 'Insights AI' : 'AI Insights'}
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        <div style={{
+          background: 'white',
+          borderRadius: '20px',
+          minHeight: '500px',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+        }}>
+          {/* Leaderboard Tab */}
+          {activeTab === 'leaderboard' && (
+            <div style={{ padding: '2rem' }}>
+              <Leaderboard ranking={ranking} language={i18n.language} />
+            </div>
+          )}
+
+          {/* Statistics Tab */}
+          {activeTab === 'stats' && stats && (
+            <div style={{ padding: '2rem' }}>
               {/* Stats Cards */}
               <div style={{
                 display: 'grid',
