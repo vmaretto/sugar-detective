@@ -30,7 +30,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing aggregated data' });
     }
 
-    // Call Claude API with server-side key
+    // Call Claude API with server-side key - Using correct model name
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
         "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
-        model: "claude-3-sonnet-20241022",
+        model: "claude-3-5-sonnet-20241022", // Fixed model name
         max_tokens: 2000,
         messages: [
           {
@@ -96,6 +96,7 @@ RISPONDI SOLO CON IL JSON, NIENT'ALTRO.`
 
     if (!response.ok) {
       const errorData = await response.json();
+      console.error('Claude API error:', errorData);
       throw new Error(errorData.error?.message || 'Claude API call failed');
     }
 
