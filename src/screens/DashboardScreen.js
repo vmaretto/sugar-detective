@@ -7,7 +7,7 @@ import Leaderboard from '../components/Leaderboard';
 import InsightsTab from '../components/InsightsTab';
 import { generateRanking } from '../utils/rankingUtils';
 
-const COLORS = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
+const COLORS = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a', '#fbbf24', '#ef4444'];
 
 const DashboardScreen = () => {
   const { t, i18n } = useTranslation();
@@ -52,90 +52,173 @@ const DashboardScreen = () => {
   };
 
   const calculateStats = () => {
-    // Demographics
-    const ageGroups = {};
-    const genders = {};
-    const sugarHabits = {};
+    // Initialize data structures with proper grouping
+    const ageGroups = {
+      '18-24': 0,
+      '25-34': 0,
+      '35-44': 0,
+      '45-54': 0,
+      '55+': 0
+    };
+    
+    const genders = {
+      'M': 0,
+      'F': 0,
+      'Other': 0
+    };
+    
+    const professionGroups = {
+      'student': 0,
+      'employee': 0,
+      'entrepreneur': 0,
+      'healthcare': 0,
+      'teacher': 0,
+      'retired': 0,
+      'other': 0
+    };
+    
+    const consumptionHabits = {
+      'daily': 0,
+      'weekly': 0,
+      'rarely': 0
+    };
 
-    // Knowledge scores
-    let totalKnowledge = 0;
-    let knowledgeCount = 0;
+    // Scores tracking
+    let totalKnowledgeScore = 0;
+    let totalAwarenessScore = 0;
+    let scoreCount = 0;
 
-    // Awareness scores
-    let totalAwareness = 0;
-    let awarenessCount = 0;
+    // Time patterns
+    const timeOfDay = {
+      'morning': [],
+      'afternoon': [],
+      'evening': [],
+      'night': []
+    };
 
-    // Estimation accuracy
-    const estimations = {
-      apple: [],
-      cocaCola: [],
-      orangeJuice: [],
-      yogurt: [],
-      biscuits: [],
-      cerealBar: []
+    // Day of week patterns
+    const dayOfWeek = {
+      'Monday': [],
+      'Tuesday': [],
+      'Wednesday': [],
+      'Thursday': [],
+      'Friday': [],
+      'Saturday': [],
+      'Sunday': []
     };
 
     participants.forEach(p => {
       const data = p.data || {};
+      const timestamp = new Date(p.timestamp);
       
       // Demographics
       if (data.profile) {
-        const { age, gender, sugarHabits: habits } = data.profile;
-        ageGroups[age] = (ageGroups[age] || 0) + 1;
-        genders[gender] = (genders[gender] || 0) + 1;
-        sugarHabits[habits] = (sugarHabits[habits] || 0) + 1;
-      }
-
-      // Knowledge
-      if (data.part2) {
-        const k1 = parseInt(data.part2.knowledge1) || 0;
-        const k2 = parseInt(data.part2.knowledge2) || 0;
-        const k3 = parseInt(data.part2.knowledge3) || 0;
-        totalKnowledge += (k1 + k2 + k3) / 3;
-        knowledgeCount++;
-      }
-
-      // Awareness
-      if (data.part4) {
-        const a1 = parseInt(data.part4.awareness1) || 0;
-        const a2 = parseInt(data.part4.awareness2) || 0;
-        const a3 = parseInt(data.part4.awareness3) || 0;
-        totalAwareness += (a1 + a2 + a3) / 3;
-        awarenessCount++;
-      }
-
-      // Estimations
-      if (data.measurements) {
-        Object.keys(estimations).forEach(food => {
-          if (data.measurements[food]) {
-            estimations[food].push(parseFloat(data.measurements[food]));
+        const { age, gender, profession, consumption } = data.profile;
+        
+        // Group ages into ranges
+        const ageNum = parseInt(age);
+        if (ageNum < 25) ageGroups['18-24']++;
+        else if (ageNum < 35) ageGroups['25-34']++;
+        else if (ageNum < 45) ageGroups['35-44']++;
+        else if (ageNum < 55) ageGroups['45-54']++;
+        else ageGroups['55+']++;
+        
+        // Gender grouping
+        if (gender) {
+          genders[gender] = (genders[gender] || 0) + 1;
+        }
+        
+        // Profession grouping (combine similar ones)
+        if (profession) {
+          if (profession === 'consultant') {
+            professionGroups['employee']++;
+          } else if (profession === 'researcher') {
+            professionGroups['healthcare']++;
+          } else if (profession === 'homemaker') {
+            professionGroups['other']++;
+          } else if (professionGroups[profession] !== undefined) {
+            professionGroups[profession]++;
+          } else {
+            professionGroups['other']++;
           }
-        });
+        }
+        
+        // Consumption habits
+        if (consumption && consumptionHabits[consumption] !== undefined) {
+          consumptionHabits[consumption]++;
+        }
+      }
+
+      // Time patterns
+      const hour = timestamp.getHours();
+      let timeSlot;
+      if (hour >= 6 && hour < 12) timeSlot = 'morning';
+      else if (hour >= 12 && hour < 18) timeSlot = 'afternoon';
+      else if (hour >= 18 && hour < 24) timeSlot = 'evening';
+      else timeSlot = 'night';
+      
+      // Day patterns
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const dayName = days[timestamp.getDay()];
+      
+      // Track scores by time/day (if we have scores from ranking)
+      const participantRanking = ranking.find(r => r.id === p.id);
+      if (participantRanking) {
+        if (participantRanking.totalScore) {
+          timeOfDay[timeSlot].push(participantRanking.totalScore);
+          dayOfWeek[dayName].push(participantRanking.totalScore);
+        }
+        
+        if (participantRanking.knowledgeScore) {
+          totalKnowledgeScore += participantRanking.knowledgeScore;
+          scoreCount++;
+        }
+        
+        if (participantRanking.awarenessScore) {
+          totalAwarenessScore += participantRanking.awarenessScore;
+        }
       }
     });
 
-    // Calculate averages
-    const avgEstimations = {};
-    Object.keys(estimations).forEach(food => {
-      const values = estimations[food];
-      if (values.length > 0) {
-        avgEstimations[food] = values.reduce((a, b) => a + b, 0) / values.length;
-      }
+    // Calculate averages for time patterns
+    Object.keys(timeOfDay).forEach(key => {
+      const scores = timeOfDay[key];
+      timeOfDay[key] = scores.length > 0 
+        ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1)
+        : 0;
     });
+
+    Object.keys(dayOfWeek).forEach(key => {
+      const scores = dayOfWeek[key];
+      dayOfWeek[key] = scores.length > 0
+        ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1)
+        : 0;
+    });
+
+    // Format data for charts
+    const formatDataForChart = (obj, nameKey = 'name') => {
+      return Object.entries(obj).map(([key, value]) => ({
+        [nameKey]: key,
+        value: value,
+        percentage: participants.length > 0 ? ((value / participants.length) * 100).toFixed(1) : 0
+      }));
+    };
 
     setStats({
       totalParticipants: participants.length,
       demographics: {
-        age: Object.entries(ageGroups).map(([name, value]) => ({ name, value })),
-        gender: Object.entries(genders).map(([name, value]) => ({ name, value })),
-        habits: Object.entries(sugarHabits).map(([name, value]) => ({ name, value }))
+        age: formatDataForChart(ageGroups, 'ageGroup'),
+        gender: formatDataForChart(genders, 'gender'),
+        profession: formatDataForChart(professionGroups, 'profession'),
+        consumption: formatDataForChart(consumptionHabits, 'habit')
       },
-      avgKnowledge: knowledgeCount > 0 ? (totalKnowledge / knowledgeCount).toFixed(2) : 0,
-      avgAwareness: awarenessCount > 0 ? (totalAwareness / awarenessCount).toFixed(2) : 0,
-      estimations: Object.entries(avgEstimations).map(([name, value]) => ({
-        name: name.charAt(0).toUpperCase() + name.slice(1),
-        estimate: parseFloat(value.toFixed(2))
-      }))
+      avgKnowledgeScore: scoreCount > 0 ? (totalKnowledgeScore / scoreCount).toFixed(1) : 0,
+      avgAwarenessScore: scoreCount > 0 ? (totalAwarenessScore / scoreCount).toFixed(1) : 0,
+      avgTotalScore: ranking.length > 0 
+        ? (ranking.reduce((sum, p) => sum + (p.totalScore || 0), 0) / ranking.length).toFixed(1)
+        : 0,
+      timePatterns: formatDataForChart(timeOfDay, 'timeSlot'),
+      dayPatterns: formatDataForChart(dayOfWeek, 'day')
     });
   };
 
@@ -146,29 +229,41 @@ const DashboardScreen = () => {
     }
 
     const headers = [
+      'ID',
       'Timestamp',
       'Language',
-      'Age',
+      'Age Group',
       'Gender',
       'Profession',
       'Consumption',
       'Total Score',
       'Knowledge Score',
-      'Awareness Score'
+      'Awareness Score',
+      'Rank'
     ];
 
     const rows = ranking.map(p => {
       const profile = p.profile || {};
+      const age = parseInt(profile.age);
+      let ageGroup = '';
+      if (age < 25) ageGroup = '18-24';
+      else if (age < 35) ageGroup = '25-34';
+      else if (age < 45) ageGroup = '35-44';
+      else if (age < 55) ageGroup = '45-54';
+      else ageGroup = '55+';
+      
       return [
+        p.id,
         p.timestamp,
-        p.language,
-        profile.age || '',
+        p.language || 'it',
+        ageGroup,
         profile.gender || '',
         profile.profession || '',
         profile.consumption || '',
         p.totalScore || 0,
         p.knowledgeScore || 0,
-        p.awarenessScore || 0
+        p.awarenessScore || 0,
+        p.rank || ''
       ];
     });
 
@@ -719,197 +814,6 @@ const DashboardScreen = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* Insights Tab */}
-          {activeTab === 'insights' && (
-            <InsightsTab participants={participants} language={i18n.language} />
-          )}
-        </div>
-
-        {/* Back Button */}
-        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-          <button
-            onClick={() => navigate('/')}
-            style={{
-              padding: '1rem 2rem',
-              background: 'white',
-              color: '#667eea',
-              border: '2px solid white',
-              borderRadius: '10px',
-              cursor: 'pointer',
-              fontSize: '1rem',
-              fontWeight: '600'
-            }}
-          >
-            ← {i18n.language === 'it' ? 'Torna alla Home' : 'Back to Home'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default DashboardScreen;
-              {i18n.language === 'it' ? 'Statistiche' : 'Statistics'}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('insights')}
-              style={{
-                padding: '0.75rem 1.5rem',
-                background: activeTab === 'insights' ? '#667eea' : 'transparent',
-                color: activeTab === 'insights' ? 'white' : '#667eea',
-                border: '2px solid #667eea',
-                borderRadius: '10px',
-                cursor: 'pointer',
-                fontWeight: '600',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                transition: 'all 0.2s'
-              }}
-            >
-              <Brain size={20} />
-              {i18n.language === 'it' ? 'Insights AI' : 'AI Insights'}
-            </button>
-          </div>
-        </div>
-
-        {/* Tab Content */}
-        <div style={{
-          background: 'white',
-          borderRadius: '20px',
-          minHeight: '500px',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
-        }}>
-          {/* Leaderboard Tab */}
-          {activeTab === 'leaderboard' && (
-            <div style={{ padding: '2rem' }}>
-              <Leaderboard ranking={ranking} language={i18n.language} />
-            </div>
-          )}
-
-          {/* Statistics Tab */}
-          {activeTab === 'stats' && stats && (
-            <div style={{ padding: '2rem' }}>
-              {/* Stats Cards */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '1.5rem',
-                marginBottom: '2rem'
-              }}>
-                <div style={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  borderRadius: '15px',
-                  padding: '1.5rem',
-                  color: 'white',
-                  textAlign: 'center'
-                }}>
-                  <Users size={32} style={{ margin: '0 auto 0.5rem' }} />
-                  <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
-                    {stats.totalParticipants}
-                  </div>
-                  <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>
-                    {i18n.language === 'it' ? 'Partecipanti Totali' : 'Total Participants'}
-                  </div>
-                </div>
-
-                <div style={{
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  borderRadius: '15px',
-                  padding: '1.5rem',
-                  color: 'white',
-                  textAlign: 'center'
-                }}>
-                  <TrendingUp size={32} style={{ margin: '0 auto 0.5rem' }} />
-                  <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
-                    {ranking.length > 0 
-                      ? (ranking.reduce((sum, p) => sum + (p.totalScore || 0), 0) / ranking.length).toFixed(1)
-                      : 0}
-                  </div>
-                  <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>
-                    {i18n.language === 'it' ? 'Punteggio Medio' : 'Average Score'}
-                  </div>
-                </div>
-
-                <div style={{
-                  background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                  borderRadius: '15px',
-                  padding: '1.5rem',
-                  color: 'white',
-                  textAlign: 'center'
-                }}>
-                  <Trophy size={32} style={{ margin: '0 auto 0.5rem' }} />
-                  <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
-                    {ranking[0]?.totalScore || 0}
-                  </div>
-                  <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>
-                    {i18n.language === 'it' ? 'Miglior Punteggio' : 'Best Score'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Charts */}
-              {stats.demographics.age.length > 0 && (
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-                  gap: '2rem'
-                }}>
-                  {/* Age Distribution */}
-                  <div style={{
-                    background: '#f9fafb',
-                    borderRadius: '15px',
-                    padding: '1.5rem'
-                  }}>
-                    <h3 style={{ marginBottom: '1rem', color: '#667eea' }}>
-                      {i18n.language === 'it' ? 'Distribuzione Età' : 'Age Distribution'}
-                    </h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <PieChart>
-                        <Pie
-                          data={stats.demographics.age}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                        >
-                          {stats.demographics.age.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  {/* Gender Distribution */}
-                  <div style={{
-                    background: '#f9fafb',
-                    borderRadius: '15px',
-                    padding: '1.5rem'
-                  }}>
-                    <h3 style={{ marginBottom: '1rem', color: '#667eea' }}>
-                      {i18n.language === 'it' ? 'Distribuzione Genere' : 'Gender Distribution'}
-                    </h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={stats.demographics.gender}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Bar dataKey="value" fill="#667eea" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
