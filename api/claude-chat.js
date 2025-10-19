@@ -30,7 +30,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing message' });
     }
 
-    // Build conversation context
+    // Build system prompt
     const systemPrompt = `Sei un esperto data scientist che sta analizzando i dati di un esperimento sulla percezione del contenuto di zucchero in frutta e verdura. 
 
 CONTESTO DATI:
@@ -48,25 +48,25 @@ IMPORTANTE:
 - Se trovi pattern curiosi, evidenziali
 - Usa emoji per rendere la risposta più friendly`;
 
-    // Build messages array with conversation history
-    const messages = [
-      { role: "system", content: systemPrompt }
-    ];
+    // Build messages array with conversation history (no system role in messages)
+    const messages = [];
 
     // Add conversation history if available
     if (conversationHistory && conversationHistory.length > 0) {
       conversationHistory.forEach(msg => {
-        messages.push({
-          role: msg.role === 'user' ? 'user' : 'assistant',
-          content: msg.content
-        });
+        if (msg.role === 'user' || msg.role === 'assistant') {
+          messages.push({
+            role: msg.role,
+            content: msg.content
+          });
+        }
       });
     }
 
     // Add current message
     messages.push({ role: "user", content: message });
 
-    // Call Claude API
+    // Call Claude API with system as a separate parameter
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -77,6 +77,7 @@ IMPORTANTE:
       body: JSON.stringify({
         model: "claude-3-5-sonnet-20241022",
         max_tokens: 1000,
+        system: systemPrompt,  // System prompt as a separate parameter
         messages: messages
       })
     });
