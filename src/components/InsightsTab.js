@@ -1201,118 +1201,150 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
             </div>
           )}
 
-          {/* Curiosities Grid */}
+          {/* Curiosities Grid - Always 9 insights in 3x3 */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+            gridTemplateColumns: 'repeat(3, 1fr)',
             gap: '1.5rem',
             marginBottom: '2rem'
           }}>
-            {insights.curiosities?.map((curiosity, index) => (
-              <div
-                key={index}
-                style={{
-                  background: 'white',
-                  borderRadius: '15px',
-                  padding: '1.5rem',
-                  boxShadow: '0 5px 15px rgba(0,0,0,0.1)',
-                  border: `2px solid ${
-                    curiosity.type === 'paradox' ? '#ef4444' :
-                    curiosity.type === 'psychological' ? '#8b5cf6' :
-                    curiosity.type === 'temporal' ? '#f59e0b' :
-                    curiosity.type === 'behavioral' ? '#10b981' :
-                    curiosity.type === 'demographic' ? '#3b82f6' :
-                    '#667eea'
-                  }`,
-                  transition: 'transform 0.2s',
-                  position: 'relative'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-5px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                <button
-                  onClick={() => toggleFavorite(curiosity)}
+            {(() => {
+              // Ensure we always have exactly 9 curiosities for 3x3 grid
+              let displayCuriosities = insights.curiosities || [];
+              
+              // If we have less than 9, add placeholder insights
+              while (displayCuriosities.length < 9) {
+                displayCuriosities.push({
+                  title: language === 'it' ? `Insight ${displayCuriosities.length + 1}` : `Insight ${displayCuriosities.length + 1}`,
+                  insight: language === 'it' ? 'Analisi in corso...' : 'Analysis in progress...',
+                  emoji: '🔍',
+                  type: 'correlation',
+                  strength: 3,
+                  evidence: ''
+                });
+              }
+              
+              // If we have more than 9, take only the first 9
+              displayCuriosities = displayCuriosities.slice(0, 9);
+              
+              return displayCuriosities.map((curiosity, index) => (
+                <div
+                  key={index}
                   style={{
-                    position: 'absolute',
-                    top: '1rem',
-                    right: '1rem',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: isFavorite(curiosity) ? '#fbbf24' : '#d1d5db',
-                    transition: 'color 0.2s'
+                    background: 'white',
+                    borderRadius: '15px',
+                    padding: '1.25rem',
+                    boxShadow: '0 5px 15px rgba(0,0,0,0.1)',
+                    border: `2px solid ${
+                      curiosity.type === 'paradox' ? '#dc2626' :
+                      curiosity.type === 'psychological' ? '#7c3aed' :
+                      curiosity.type === 'temporal' ? '#ea580c' :
+                      curiosity.type === 'behavioral' ? '#16a34a' :
+                      curiosity.type === 'demographic' ? '#2563eb' :
+                      '#0891b2'
+                    }`,
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    position: 'relative',
+                    minHeight: '200px',
+                    display: 'flex',
+                    flexDirection: 'column'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-5px)';
+                    e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.15)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)';
                   }}
                 >
-                  <Star size={20} fill={isFavorite(curiosity) ? '#fbbf24' : 'none'} />
-                </button>
-                
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '1rem'
-                }}>
-                  <span style={{ fontSize: '2.5rem' }}>{curiosity.emoji}</span>
-                  <div style={{ flex: 1 }}>
-                    <h4 style={{
-                      fontSize: '1.125rem',
-                      fontWeight: 'bold',
-                      color: '#1f2937',
-                      marginBottom: '0.5rem'
-                    }}>
-                      {curiosity.title}
-                    </h4>
-                    <p style={{
-                      fontSize: '0.875rem',
-                      color: '#4b5563',
-                      lineHeight: '1.6',
+                  <button
+                    onClick={() => toggleFavorite(curiosity)}
+                    style={{
+                      position: 'absolute',
+                      top: '0.75rem',
+                      right: '0.75rem',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: isFavorite(curiosity) ? '#fbbf24' : '#d1d5db',
+                      transition: 'color 0.2s',
+                      padding: '0.25rem'
+                    }}
+                  >
+                    <Star size={18} fill={isFavorite(curiosity) ? '#fbbf24' : 'none'} />
+                  </button>
+                  
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '0.75rem',
                       marginBottom: '0.75rem'
+                    }}>
+                      <span style={{ fontSize: '2rem', lineHeight: '1' }}>{curiosity.emoji}</span>
+                      <h4 style={{
+                        fontSize: '1rem',
+                        fontWeight: 'bold',
+                        color: '#1e293b',
+                        lineHeight: '1.2',
+                        flex: 1
+                      }}>
+                        {curiosity.title}
+                      </h4>
+                    </div>
+                    
+                    <p style={{
+                      fontSize: '0.813rem',
+                      color: '#475569',
+                      lineHeight: '1.5',
+                      marginBottom: '0.75rem',
+                      flex: 1
                     }}>
                       {curiosity.insight}
                     </p>
+                    
                     {curiosity.evidence && (
                       <p style={{
-                        fontSize: '0.75rem',
-                        color: '#9ca3af',
+                        fontSize: '0.688rem',
+                        color: '#94a3b8',
                         fontStyle: 'italic',
-                        borderTop: '1px solid #e5e7eb',
+                        borderTop: '1px solid #e2e8f0',
                         paddingTop: '0.5rem',
-                        marginTop: '0.5rem'
+                        marginTop: 'auto'
                       }}>
                         📊 {curiosity.evidence}
                       </p>
                     )}
+                    
                     {/* Strength indicator */}
                     <div style={{
-                      marginTop: '0.75rem',
+                      marginTop: '0.5rem',
                       display: 'flex',
-                      gap: '0.25rem'
+                      gap: '0.2rem'
                     }}>
                       {[...Array(5)].map((_, i) => (
                         <div
                           key={i}
                           style={{
-                            width: '30px',
-                            height: '4px',
+                            flex: 1,
+                            height: '3px',
                             borderRadius: '2px',
                             background: i < curiosity.strength ? 
-                              (curiosity.type === 'paradox' ? '#ef4444' :
-                               curiosity.type === 'psychological' ? '#8b5cf6' :
-                               curiosity.type === 'temporal' ? '#f59e0b' :
-                               curiosity.type === 'behavioral' ? '#10b981' :
-                               curiosity.type === 'demographic' ? '#3b82f6' :
-                               '#667eea') : '#e5e7eb'
+                              (curiosity.type === 'paradox' ? '#dc2626' :
+                               curiosity.type === 'psychological' ? '#7c3aed' :
+                               curiosity.type === 'temporal' ? '#ea580c' :
+                               curiosity.type === 'behavioral' ? '#16a34a' :
+                               curiosity.type === 'demographic' ? '#2563eb' :
+                               '#0891b2') : '#e5e7eb'
                           }}
                         />
                       ))}
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ));
+            })()}
           </div>
 
           {/* Fun Fact */}
