@@ -49,16 +49,26 @@ export default async function handler(req, res) {
 DATI AGGREGATI:
 ${JSON.stringify(aggregatedData, null, 2)}
 
-OBIETTIVO: Trova correlazioni MOLTO CURIOSE, LATERALI e NON OVVIE. Pensa fuori dagli schemi! Cerca pattern nascosti che nessuno si aspetterebbe.
+IMPORTANTE - REGOLE CRITICHE:
+1. ANALIZZA SOLO I DATI FORNITI - Non inventare dati che non esistono
+2. Se non ci sono partecipanti in un determinato orario/giorno, NON dire che ci sono
+3. Verifica sempre che i pattern che identifichi siano supportati dai dati reali
+4. Se un dato è zero o mancante, non inventare statistiche su quel gruppo
+5. Per il "funFact", usa SOLO informazioni verificabili dai dati
 
-Esempi del tipo di insights che voglio (ma trova altri ancora più curiosi):
-- Correlazioni tra orario di partecipazione e precisione
-- Pattern legati a combinazioni inaspettate (es. età + professione)
-- Paradossi comportamentali (es. chi sa meno è più preciso)
-- Effetti psicologici nascosti (es. effetto Dunning-Kruger)
-- Correlazioni con giorni della settimana o momenti della giornata
-- Pattern legati a bias cognitivi
-- Differenze controintuitive tra gruppi
+OBIETTIVO: Trova correlazioni REALI e VERIFICABILI nei dati. Cerca pattern che esistono davvero, non inventarli.
+
+Esempi di insights validi (se supportati dai dati):
+- Differenze reali tra gruppi demografici
+- Pattern temporali effettivamente presenti
+- Correlazioni tra variabili misurate
+- Paradossi comportamentali osservati
+
+NON creare insights su:
+- Orari o giorni senza partecipanti
+- Gruppi demografici non rappresentati
+- Correlazioni non supportate dai dati
+- Fatti non verificabili
 
 IMPORTANTE: Devi rispondere SOLO con un JSON valido, senza backtick o altro testo. Il JSON deve avere questa struttura esatta:
 
@@ -66,7 +76,7 @@ IMPORTANTE: Devi rispondere SOLO con un JSON valido, senza backtick o altro test
   "curiosities": [
     {
       "title": "titolo breve e accattivante (max 5 parole)",
-      "insight": "spiegazione dettagliata della scoperta con numeri e percentuali specifiche",
+      "insight": "spiegazione dettagliata BASATA SUI DATI REALI con numeri e percentuali specifiche",
       "emoji": "emoji appropriata",
       "type": "paradox|behavioral|psychological|temporal|demographic|correlation",
       "strength": numero da 1 a 5,
@@ -74,20 +84,20 @@ IMPORTANTE: Devi rispondere SOLO con un JSON valido, senza backtick o altro test
     }
   ],
   "mainTrend": {
-    "title": "il pattern più sorprendente trovato",
-    "description": "spiegazione dettagliata con percentuali",
-    "significance": "perché questo è importante o interessante"
+    "title": "il pattern più significativo REALMENTE trovato",
+    "description": "spiegazione dettagliata con percentuali VERE",
+    "significance": "perché questo è importante"
   },
   "funFact": {
-    "fact": "il fatto più divertente o controintuitivo trovato",
+    "fact": "fatto VERIFICABILE e PRESENTE NEI DATI",
     "emoji": "emoji",
-    "explanation": "breve spiegazione del perché è sorprendente"
+    "explanation": "spiegazione basata sui dati reali"
   },
   "methodology": "breve nota su come hai analizzato i dati"
 }
 
-Trova almeno 8 curiosità molto originali. Usa percentuali precise, non arrotondate. 
-Sii specifico e quantitativo. Non essere generico.
+Trova almeno 8 curiosità REALI. Usa percentuali precise dai dati forniti.
+Se non hai abbastanza dati per 9 insights, creane meno ma TUTTI VERI.
 RISPONDI SOLO CON IL JSON, NIENT'ALTRO.`
           }
         ]

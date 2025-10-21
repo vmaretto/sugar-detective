@@ -409,41 +409,175 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
   };
 
   const generateLocalInsights = (data) => {
-    return {
-      curiosities: [
-        {
-          title: language === 'it' ? "Effetto weekend" : "Weekend effect",
-          insight: language === 'it' 
-            ? "Nel weekend le persone sovrastimano del 31.7% in più rispetto ai giorni feriali"
-            : "On weekends people overestimate by 31.7% more than weekdays",
-          emoji: "📅",
-          type: "temporal",
-          strength: 4,
-          evidence: "p<0.05, n=47 weekend vs n=123 weekday"
-        }
-      ],
-      mainTrend: {
-        title: language === 'it' ? "Bias dell'ora di pranzo" : "Lunch hour bias",
-        description: language === 'it'
-          ? "Tra le 12:00 e le 14:00 c'è un picco di sottostima del 38.4%"
-          : "Between 12:00 and 14:00 there's a 38.4% underestimation peak",
-        significance: language === 'it'
-          ? "Lo stato fisiologico influenza la percezione nutritiva"
-          : "Physiological state influences nutritional perception"
-      },
-      funFact: {
-        fact: language === 'it' 
-          ? "Chi ha un gatto è 2.3x più preciso!"
-          : "Cat owners are 2.3x more accurate!",
-        emoji: "🐱",
-        explanation: language === 'it'
-          ? "Forse per l'osservazione attenta tipica dei gatti"
-          : "Perhaps due to careful observation typical of cats"
-      },
-      methodology: "Statistical analysis with correlation matrices",
+    // Generate insights based on REAL data analysis
+    const insights = {
+      curiosities: [],
+      mainTrend: null,
+      funFact: null,
+      methodology: language === 'it' 
+        ? "Analisi statistica locale dei dati raccolti"
+        : "Local statistical analysis of collected data",
       generatedAt: new Date().toISOString(),
       participantCount: participants.length
     };
+    
+    // Analyze real patterns in the data
+    const demographics = extractDemographics(participants);
+    const patterns = extractPatterns(participants);
+    
+    // Generate insights based on actual data
+    
+    // 1. Age pattern insight
+    if (demographics.ageGroups) {
+      const mostCommonAge = Object.entries(demographics.ageGroups)
+        .sort((a, b) => b[1] - a[1])[0];
+      if (mostCommonAge && mostCommonAge[1] > 0) {
+        insights.curiosities.push({
+          title: language === 'it' ? "Età predominante" : "Predominant age",
+          insight: language === 'it' 
+            ? `Il ${Math.round((mostCommonAge[1] / participants.length) * 100)}% dei partecipanti appartiene alla fascia ${mostCommonAge[0]}`
+            : `${Math.round((mostCommonAge[1] / participants.length) * 100)}% of participants are in the ${mostCommonAge[0]} age group`,
+          emoji: "👥",
+          type: "demographic",
+          strength: 4,
+          evidence: `n=${mostCommonAge[1]} su ${participants.length} totali`
+        });
+      }
+    }
+    
+    // 2. Gender distribution insight
+    if (demographics.genders) {
+      const femaleCount = demographics.genders['F'] || 0;
+      const maleCount = demographics.genders['M'] || 0;
+      if (femaleCount > 0 || maleCount > 0) {
+        const femalePercent = Math.round((femaleCount / participants.length) * 100);
+        const malePercent = Math.round((maleCount / participants.length) * 100);
+        insights.curiosities.push({
+          title: language === 'it' ? "Distribuzione genere" : "Gender distribution",
+          insight: language === 'it'
+            ? `Donne: ${femalePercent}%, Uomini: ${malePercent}%`
+            : `Women: ${femalePercent}%, Men: ${malePercent}%`,
+          emoji: "⚧",
+          type: "demographic",
+          strength: 3,
+          evidence: `F=${femaleCount}, M=${maleCount}`
+        });
+      }
+    }
+    
+    // 3. Time pattern insight (if data exists)
+    if (demographics.timePatterns) {
+      const mostActiveTime = Object.entries(demographics.timePatterns)
+        .sort((a, b) => b[1] - a[1])[0];
+      if (mostActiveTime && mostActiveTime[1] > 0) {
+        insights.curiosities.push({
+          title: language === 'it' ? "Orario preferito" : "Preferred time",
+          insight: language === 'it'
+            ? `La maggior parte delle partecipazioni (${mostActiveTime[1]}) avviene di ${
+                mostActiveTime[0] === 'morning' ? 'mattina' :
+                mostActiveTime[0] === 'afternoon' ? 'pomeriggio' :
+                mostActiveTime[0] === 'evening' ? 'sera' : 'notte'
+              }`
+            : `Most participations (${mostActiveTime[1]}) occur in the ${mostActiveTime[0]}`,
+          emoji: "🕐",
+          type: "temporal",
+          strength: 3,
+          evidence: `${Math.round((mostActiveTime[1] / participants.length) * 100)}% del totale`
+        });
+      }
+    }
+    
+    // 4. Consumption habits insight
+    if (demographics.consumption) {
+      const dailyConsumers = demographics.consumption['daily'] || 0;
+      if (dailyConsumers > 0) {
+        insights.curiosities.push({
+          title: language === 'it' ? "Consumo quotidiano" : "Daily consumption",
+          insight: language === 'it'
+            ? `${Math.round((dailyConsumers / participants.length) * 100)}% consuma frutta/verdura quotidianamente`
+            : `${Math.round((dailyConsumers / participants.length) * 100)}% consume fruits/vegetables daily`,
+          emoji: "🥗",
+          type: "behavioral",
+          strength: 4,
+          evidence: `n=${dailyConsumers}`
+        });
+      }
+    }
+    
+    // 5. Profession insight
+    if (demographics.professions) {
+      const topProfession = Object.entries(demographics.professions)
+        .filter(([k, v]) => k !== 'unknown' && v > 0)
+        .sort((a, b) => b[1] - a[1])[0];
+      if (topProfession) {
+        insights.curiosities.push({
+          title: language === 'it' ? "Professione comune" : "Common profession",
+          insight: language === 'it'
+            ? `${topProfession[0]} è la professione più rappresentata (${topProfession[1]} partecipanti)`
+            : `${topProfession[0]} is the most represented profession (${topProfession[1]} participants)`,
+          emoji: "💼",
+          type: "demographic",
+          strength: 3,
+          evidence: `${Math.round((topProfession[1] / participants.length) * 100)}%`
+        });
+      }
+    }
+    
+    // Set main trend (most significant finding)
+    if (insights.curiosities.length > 0) {
+      const mainCuriosity = insights.curiosities[0];
+      insights.mainTrend = {
+        title: mainCuriosity.title,
+        description: mainCuriosity.insight,
+        significance: language === 'it' 
+          ? "Questo è il pattern più evidente nei dati raccolti"
+          : "This is the most evident pattern in the collected data"
+      };
+    } else {
+      insights.mainTrend = {
+        title: language === 'it' ? "Dati in elaborazione" : "Processing data",
+        description: language === 'it' 
+          ? "Stiamo ancora raccogliendo dati per generare insights significativi"
+          : "Still collecting data to generate significant insights",
+        significance: ""
+      };
+    }
+    
+    // Fun fact based on real data
+    const totalParticipants = participants.length;
+    insights.funFact = {
+      fact: language === 'it' 
+        ? `Abbiamo già raccolto dati da ${totalParticipants} partecipanti!`
+        : `We have already collected data from ${totalParticipants} participants!`,
+      emoji: "🎉",
+      explanation: language === 'it'
+        ? "Ogni partecipazione contribuisce alla ricerca"
+        : "Every participation contributes to the research"
+    };
+    
+    // Ensure we have at least 8 insights (duplicate if necessary)
+    while (insights.curiosities.length < 8 && insights.curiosities.length > 0) {
+      const randomIndex = Math.floor(Math.random() * insights.curiosities.length);
+      insights.curiosities.push({
+        ...insights.curiosities[randomIndex],
+        title: insights.curiosities[randomIndex].title + " (2)",
+        strength: Math.max(1, insights.curiosities[randomIndex].strength - 1)
+      });
+    }
+    
+    // If still not enough, add placeholder
+    while (insights.curiosities.length < 8) {
+      insights.curiosities.push({
+        title: language === 'it' ? "In analisi" : "Analyzing",
+        insight: language === 'it' ? "Dati in elaborazione..." : "Processing data...",
+        emoji: "📊",
+        type: "correlation",
+        strength: 2,
+        evidence: ""
+      });
+    }
+    
+    return insights;
   };
 
   const toggleFavorite = (insight) => {
@@ -1179,22 +1313,22 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
           {/* Main Trend Card */}
           {insights.mainTrend && (
             <div style={{
-              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+              background: 'linear-gradient(135deg, #ddd6fe 0%, #c7d2fe 100%)',
               borderRadius: '20px',
               padding: '2rem',
               marginBottom: '2rem',
-              color: 'white',
-              boxShadow: '0 10px 30px rgba(240, 147, 251, 0.3)'
+              boxShadow: '0 10px 30px rgba(139, 92, 246, 0.2)',
+              border: '2px solid #7c3aed'
             }}>
-              <TrendingUp size={48} style={{ marginBottom: '1rem' }} />
-              <h3 style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+              <TrendingUp size={48} style={{ marginBottom: '1rem', color: '#5b21b6' }} />
+              <h3 style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '1rem', color: '#1e1b4b' }}>
                 {insights.mainTrend.title}
               </h3>
-              <p style={{ fontSize: '1.125rem', marginBottom: '1rem', opacity: 0.95 }}>
+              <p style={{ fontSize: '1.125rem', marginBottom: '1rem', color: '#312e81', fontWeight: '500' }}>
                 {insights.mainTrend.description}
               </p>
               {insights.mainTrend.significance && (
-                <p style={{ fontSize: '0.875rem', opacity: 0.85, fontStyle: 'italic' }}>
+                <p style={{ fontSize: '0.875rem', color: '#4c1d95', fontStyle: 'italic', fontWeight: '500' }}>
                   💡 {insights.mainTrend.significance}
                 </p>
               )}
@@ -1212,19 +1346,32 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
               // Ensure we always have exactly 9 curiosities for 3x3 grid
               let displayCuriosities = insights.curiosities || [];
               
-              // If we have less than 9, add placeholder insights
-              while (displayCuriosities.length < 9) {
+              // If we have less than 9, duplicate some insights with variations
+              while (displayCuriosities.length < 9 && displayCuriosities.length > 0) {
+                const randomIndex = Math.floor(Math.random() * displayCuriosities.length);
+                const baseCuriosity = displayCuriosities[randomIndex];
                 displayCuriosities.push({
-                  title: language === 'it' ? `Insight ${displayCuriosities.length + 1}` : `Insight ${displayCuriosities.length + 1}`,
-                  insight: language === 'it' ? 'Analisi in corso...' : 'Analysis in progress...',
-                  emoji: '🔍',
-                  type: 'correlation',
-                  strength: 3,
-                  evidence: ''
+                  ...baseCuriosity,
+                  title: baseCuriosity.title + " (bis)",
+                  strength: Math.max(1, baseCuriosity.strength - 1)
                 });
               }
               
-              // If we have more than 9, take only the first 9
+              // If still no insights, add real placeholder
+              if (displayCuriosities.length === 0) {
+                for (let i = 0; i < 9; i++) {
+                  displayCuriosities.push({
+                    title: language === 'it' ? 'Analisi in corso' : 'Analyzing',
+                    insight: language === 'it' ? 'Stiamo elaborando i dati...' : 'Processing data...',
+                    emoji: '📊',
+                    type: 'correlation',
+                    strength: 3,
+                    evidence: ''
+                  });
+                }
+              }
+              
+              // Take exactly 9
               displayCuriosities = displayCuriosities.slice(0, 9);
               
               return displayCuriosities.map((curiosity, index) => (
@@ -1286,7 +1433,7 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
                       <h4 style={{
                         fontSize: '1rem',
                         fontWeight: 'bold',
-                        color: '#1e293b',
+                        color: '#111827', // Very dark gray for maximum contrast
                         lineHeight: '1.2',
                         flex: 1
                       }}>
@@ -1295,23 +1442,25 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
                     </div>
                     
                     <p style={{
-                      fontSize: '0.813rem',
-                      color: '#475569',
+                      fontSize: '0.875rem',
+                      color: '#374151', // Dark gray for good readability
                       lineHeight: '1.5',
                       marginBottom: '0.75rem',
-                      flex: 1
+                      flex: 1,
+                      fontWeight: '400'
                     }}>
                       {curiosity.insight}
                     </p>
                     
                     {curiosity.evidence && (
                       <p style={{
-                        fontSize: '0.688rem',
-                        color: '#94a3b8',
+                        fontSize: '0.75rem',
+                        color: '#1f2937', // Very dark gray instead of light gray
                         fontStyle: 'italic',
-                        borderTop: '1px solid #e2e8f0',
+                        borderTop: '1px solid #e5e7eb',
                         paddingTop: '0.5rem',
-                        marginTop: 'auto'
+                        marginTop: 'auto',
+                        fontWeight: '500'
                       }}>
                         📊 {curiosity.evidence}
                       </p>
@@ -1350,35 +1499,38 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
           {/* Fun Fact */}
           {insights.funFact && (
             <div style={{
-              background: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+              background: 'linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%)',
               borderRadius: '20px',
               padding: '2rem',
               textAlign: 'center',
               boxShadow: '0 10px 30px rgba(252, 182, 159, 0.3)',
-              marginBottom: '2rem'
+              marginBottom: '2rem',
+              border: '2px solid #f59e0b'
             }}>
               <span style={{ fontSize: '3rem' }}>{insights.funFact.emoji}</span>
               <h3 style={{
                 fontSize: '1.5rem',
                 fontWeight: 'bold',
-                color: '#7c3aed',
+                color: '#92400e', // Dark brown for high contrast
                 marginTop: '1rem'
               }}>
                 {language === 'it' ? 'Lo sapevi che...' : 'Did you know...'}
               </h3>
               <p style={{
                 fontSize: '1.125rem',
-                color: '#6b21a8',
-                marginTop: '0.5rem'
+                color: '#451a03', // Very dark brown for readability
+                marginTop: '0.5rem',
+                fontWeight: '500'
               }}>
                 {insights.funFact.fact}
               </p>
               {insights.funFact.explanation && (
                 <p style={{
                   fontSize: '0.875rem',
-                  color: '#7c3aed',
+                  color: '#78350f', // Dark amber for good contrast
                   marginTop: '0.5rem',
-                  fontStyle: 'italic'
+                  fontStyle: 'italic',
+                  fontWeight: '500'
                 }}>
                   {insights.funFact.explanation}
                 </p>
@@ -1392,9 +1544,11 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
               background: '#f3f4f6',
               borderRadius: '10px',
               padding: '1rem',
-              fontSize: '0.75rem',
-              color: '#6b7280',
-              textAlign: 'center'
+              fontSize: '0.875rem',
+              color: '#1f2937', // Dark gray for good contrast
+              textAlign: 'center',
+              fontWeight: '500',
+              border: '1px solid #d1d5db'
             }}>
               🔬 {language === 'it' ? 'Metodologia: ' : 'Methodology: '} {insights.methodology}
             </div>
