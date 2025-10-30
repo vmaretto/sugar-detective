@@ -106,8 +106,15 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
         note: 'Thursday data excluded (test data)'
       };
 
-      // Call server-side API endpoint
-      const response = await fetch("/api/claude-insights", {
+      // Call server-side API endpoint (Railway for long-running analysis, or Vercel fallback)
+      const apiUrl = process.env.REACT_APP_INSIGHTS_API_URL || "/api/claude-insights";
+      const endpoint = process.env.REACT_APP_INSIGHTS_API_URL
+        ? `${apiUrl}/api/insights`
+        : apiUrl;
+
+      console.log(`Calling insights API: ${endpoint}`);
+
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
