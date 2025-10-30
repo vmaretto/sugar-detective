@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["nodejs-18_x"]
+
+[phases.install]
+cmds = ["cd railway-server && npm ci"]
+
+[phases.build]
+cmds = ["echo 'No build needed'"]
+
+[start]
+cmd = "cd railway-server && node server.js"
