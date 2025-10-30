@@ -188,6 +188,7 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
     console.log('[InsightsTab] Data hash:', dataHash);
 
     // Check localStorage cache first
+    const REQUIRED_PROMPT_VERSION = "v2.0_lateral_insights"; // Must match backend version
     const cachedInsights = localStorage.getItem(`insights_cache_${dataHash}`);
     if (cachedInsights) {
       try {
@@ -195,7 +196,11 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
         const cacheAge = Date.now() - new Date(parsed.generatedAt).getTime();
         const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 giorni
 
-        if (cacheAge < maxAge) {
+        // Check if cache has the correct prompt version
+        if (parsed.promptVersion !== REQUIRED_PROMPT_VERSION) {
+          console.log('[InsightsTab] ⚠️ Cached insights from old prompt version, invalidating');
+          localStorage.removeItem(`insights_cache_${dataHash}`);
+        } else if (cacheAge < maxAge) {
           console.log('[InsightsTab] ✓ Found valid cached insights (age: ' + Math.round(cacheAge / 1000 / 60) + ' minutes)');
           setInsights(parsed);
           setApiConfigured(true);
@@ -730,27 +735,8 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
         : "Every participation contributes to the research"
     };
     
-    // Ensure we have at least 8 insights (duplicate if necessary)
-    while (insights.curiosities.length < 8 && insights.curiosities.length > 0) {
-      const randomIndex = Math.floor(Math.random() * insights.curiosities.length);
-      insights.curiosities.push({
-        ...insights.curiosities[randomIndex],
-        title: insights.curiosities[randomIndex].title + " (2)",
-        strength: Math.max(1, insights.curiosities[randomIndex].strength - 1)
-      });
-    }
-    
-    // If still not enough, add placeholder
-    while (insights.curiosities.length < 8) {
-      insights.curiosities.push({
-        title: language === 'it' ? "In analisi" : "Analyzing",
-        insight: language === 'it' ? "Dati in elaborazione..." : "Processing data...",
-        emoji: "📊",
-        type: "correlation",
-        strength: 2,
-        evidence: ""
-      });
-    }
+    // Don't duplicate insights - let the AI generate unique ones
+    // If we don't have enough, that's OK - quality over quantity
     
     return insights;
   };
@@ -1571,46 +1557,14 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
             </div>
           )}
 
-          {/* Curiosities Grid - Always 9 insights in 3x3 */}
+          {/* Curiosities Grid - Responsive grid based on number of insights */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
             gap: '1.5rem',
             marginBottom: '2rem'
           }}>
-            {(() => {
-              // Ensure we always have exactly 9 curiosities for 3x3 grid
-              let displayCuriosities = insights.curiosities || [];
-              
-              // If we have less than 9, duplicate some insights with variations
-              while (displayCuriosities.length < 9 && displayCuriosities.length > 0) {
-                const randomIndex = Math.floor(Math.random() * displayCuriosities.length);
-                const baseCuriosity = displayCuriosities[randomIndex];
-                displayCuriosities.push({
-                  ...baseCuriosity,
-                  title: baseCuriosity.title + " (bis)",
-                  strength: Math.max(1, baseCuriosity.strength - 1)
-                });
-              }
-              
-              // If still no insights, add real placeholder
-              if (displayCuriosities.length === 0) {
-                for (let i = 0; i < 9; i++) {
-                  displayCuriosities.push({
-                    title: language === 'it' ? 'Analisi in corso' : 'Analyzing',
-                    insight: language === 'it' ? 'Stiamo elaborando i dati...' : 'Processing data...',
-                    emoji: '📊',
-                    type: 'correlation',
-                    strength: 3,
-                    evidence: ''
-                  });
-                }
-              }
-              
-              // Take exactly 9
-              displayCuriosities = displayCuriosities.slice(0, 9);
-              
-              return displayCuriosities.map((curiosity, index) => (
+            {insights.curiosities && insights.curiosities.length > 0 ? insights.curiosities.map((curiosity, index) => (
                 <div
                   key={index}
                   style={{
@@ -1728,8 +1682,16 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
                     </div>
                   </div>
                 </div>
-              ));
-            })()}
+              )) : (
+                <div style={{
+                  gridColumn: '1 / -1',
+                  padding: '3rem',
+                  textAlign: 'center',
+                  color: '#9ca3af'
+                }}>
+                  <p>{language === 'it' ? 'Nessun insight disponibile al momento' : 'No insights available at the moment'}</p>
+                </div>
+              )}
           </div>
 
           {/* Fun Fact */}

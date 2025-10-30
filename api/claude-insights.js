@@ -1,6 +1,9 @@
 // api/claude-insights.js - Chunked Analysis Version with OpenAI GPT-4o
 // Analizza TUTTI i dati raw dividendoli in blocchi per evitare rate limits
 
+// PROMPT VERSION: Increment this when prompts change to invalidate cache
+const PROMPT_VERSION = "v2.0_lateral_insights";
+
 export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -138,6 +141,7 @@ export default async function handler(req, res) {
     finalInsights.chunksAnalyzed = chunks.length;
     finalInsights.analysisTimeSeconds = parseFloat(totalTime);
     finalInsights.aiProvider = useOpenAI ? 'OpenAI GPT-4o' : 'Claude Haiku';
+    finalInsights.promptVersion = PROMPT_VERSION; // For cache invalidation
 
     return res.status(200).json(finalInsights);
     
@@ -151,42 +155,70 @@ export default async function handler(req, res) {
 
 // Analyze individual chunk
 async function analyzeChunk(chunk, totalChunks, apiKey, isItalian, useOpenAI = false) {
-  const prompt = `Analizza nel dettaglio questi ${chunk.data.length} partecipanti (gruppo ${chunk.index} di ${totalChunks}).
+  const prompt = `Sei un data scientist esperto in psicologia comportamentale e analisi statistica avanzata.
+Analizza nel dettaglio questi ${chunk.data.length} partecipanti (gruppo ${chunk.index} di ${totalChunks}).
 
 DATI RAW COMPLETI DEL GRUPPO:
 ${JSON.stringify(chunk.data, null, 2)}
 
-TROVA:
-1. Pattern demografici (età, genere, professione)
-2. Correlazioni tra profilo e performance
-3. Anomalie o outlier interessanti
-4. Tendenze nei punteggi
-5. Pattern nelle risposte al questionario
+OBIETTIVO: Trova correlazioni NASCOSTE, pattern CONTRO-INTUITIVI, e insight LATERALI che non sono ovvi.
 
-IMPORTANTE: Analizza OGNI dettaglio nei dati raw.
+NON limitarti a statistiche semplici! Cerca:
+
+1. CORRELAZIONI NASCOSTE E LATERALI:
+   - Relazioni non ovvie tra variabili (es: "chi partecipa di sera ha accuratezza diversa?")
+   - Pattern comportamentali inaspettati (es: "professioni specifiche sovrastimano certi alimenti?")
+   - Effetti di genere/età su specifici alimenti (non generici)
+   - Correlazioni tra velocità di risposta e accuracy
+   - Pattern tra consapevolezza dichiarata e performance reale
+
+2. PARADOSSI E CONTRO-INTUIZIONI:
+   - Gruppi che dovrebbero essere precisi ma non lo sono
+   - Alimenti che tutti sbagliano in modo sistematico
+   - Discrepanze tra autovalutazione e performance
+   - Pattern che contraddicono le aspettative
+
+3. PSICOLOGIA COMPORTAMENTALE:
+   - Bias cognitivi evidenti nei dati
+   - Pattern di sovrastima/sottostima sistematica
+   - Effetto Dunning-Kruger (chi si sente esperto vs chi performa bene)
+   - Effetti temporali sulla performance (stanchezza, orario)
+
+4. ANOMALIE INTERESSANTI:
+   - Outlier con storie interessanti
+   - Gruppi demografici con pattern unici
+   - Comportamenti anomali che rivelano insight
+
+IMPORTANTE:
+- Analizza OGNI dettaglio nei dati raw
+- Cerca pattern non ovvi
+- Collega variabili in modi creativi
+- Pensa come uno psicologo comportamentale
 
 Rispondi SOLO con JSON valido in questo formato:
 {
   "patterns": [
     {
-      "type": "demographic|behavioral|performance",
-      "description": "descrizione dettagliata",
-      "evidence": "dati specifici",
-      "strength": 1-5
+      "type": "paradox|psychological|behavioral|temporal|demographic|correlation",
+      "description": "descrizione dettagliata del pattern NASCOSTO",
+      "evidence": "dati specifici e numeri",
+      "strength": 1-5,
+      "insight": "perché questo è contro-intuitivo o interessante"
     }
   ],
   "anomalies": [
     {
       "description": "anomalia trovata",
       "participants": "chi riguarda",
-      "significance": "perché è importante"
+      "significance": "perché è importante/sorprendente"
     }
   ],
   "correlations": [
     {
       "variables": ["var1", "var2"],
-      "relationship": "descrizione",
-      "coefficient": "stima correlazione"
+      "relationship": "descrizione della relazione NON OVVIA",
+      "coefficient": "stima correlazione",
+      "surprise_factor": "perché è inaspettato"
     }
   ],
   "stats": {
@@ -306,53 +338,74 @@ async function synthesizeInsights(chunkInsights, fullData, apiKey, isItalian, us
   const allPatterns = chunkInsights.flatMap(c => c.patterns || []);
   const allAnomalies = chunkInsights.flatMap(c => c.anomalies || []);
   const allCorrelations = chunkInsights.flatMap(c => c.correlations || []);
-  
+
   // Prepare synthesis prompt
-  const synthesisPrompt = `Sei un data scientist esperto. Sintetizza questi pattern trovati analizzando ${fullData.totalParticipants} partecipanti in ${chunkInsights.length} gruppi.
+  const synthesisPrompt = `Sei un data scientist esperto in psicologia comportamentale e comunicazione scientifica coinvolgente.
+Sintetizza questi pattern trovati analizzando ${fullData.totalParticipants} partecipanti in ${chunkInsights.length} gruppi.
 
 PATTERN TROVATI (${allPatterns.length} totali):
-${JSON.stringify(allPatterns.slice(0, 20))}
+${JSON.stringify(allPatterns.slice(0, 30), null, 2)}
 
 ANOMALIE (${allAnomalies.length} totali):
-${JSON.stringify(allAnomalies.slice(0, 10))}
+${JSON.stringify(allAnomalies.slice(0, 15), null, 2)}
 
 CORRELAZIONI (${allCorrelations.length} totali):
-${JSON.stringify(allCorrelations.slice(0, 10))}
+${JSON.stringify(allCorrelations.slice(0, 15), null, 2)}
 
 STATISTICHE GLOBALI:
 - Partecipanti totali: ${fullData.totalParticipants}
-- Demografia: ${JSON.stringify(fullData.demographics || {}).substring(0, 200)}
-- Pattern: ${JSON.stringify(fullData.patterns || {}).substring(0, 200)}
+- Demografia: ${JSON.stringify(fullData.demographics || {}).substring(0, 500)}
+- Pattern: ${JSON.stringify(fullData.patterns || {}).substring(0, 500)}
 
-Genera gli insights finali più interessanti e significativi.
-${isItalian ? 'Rispondi in italiano.' : 'Respond in English.'}
+OBIETTIVO: Crea insights ACCATTIVANTI, SORPRENDENTI e CONTRO-INTUITIVI.
+
+REGOLE FONDAMENTALI:
+1. NIENTE statistiche banali (NO "36% ha età 18-24", "50% donne 47% uomini")
+2. CERCA pattern nascosti, correlazioni laterali, paradossi psicologici
+3. USA i dati specifici trovati nei pattern/anomalie/correlazioni sopra
+4. Spiega PERCHÉ ogni insight è interessante/sorprendente
+5. Preferisci quality over quantity - meglio 8 insight incredibili che 9 mediocri
+6. VARIA i tipi: mix di paradox, psychological, behavioral, temporal, correlation
+7. ${isItalian ? 'Rispondi in italiano con linguaggio coinvolgente' : 'Respond in English with engaging language'}
+
+ESEMPI DI BUONI INSIGHT:
+✅ "Effetto Dunning-Kruger: chi si sente 'esperto' (8-10/10) sbaglia del 23% in più rispetto a chi si valuta 'medio' (5-7/10)"
+✅ "Paradosso temporale: precisione cala del 15% dopo le 20:00, suggerendo che la stanchezza impatta la percezione del dolce"
+✅ "Gender bias specifico: le donne sovrastimano la banana (+2.3 Brix) mentre gli uomini la sottostimano (-1.8 Brix)"
+✅ "Professionisti sanitari non più precisi: medici/infermieri al 58% vs studenti al 61% - la formazione non aiuta!"
+
+ESEMPI DI INSIGHT DA EVITARE:
+❌ "Il 36% dei partecipanti appartiene alla fascia 18-24" (troppo descrittivo, poco interessante)
+❌ "La maggioranza partecipa di pomeriggio" (ovvio, non dice nulla di profondo)
+❌ "Distribuzione genere: 50% donne, 47% uomini" (statistica base, non insight)
 
 IMPORTANTE: Rispondi SOLO con JSON valido:
 {
   "curiosities": [
     {
-      "title": "titolo breve (max 5 parole)",
-      "insight": "spiegazione dettagliata con numeri e percentuali REALI dai dati",
-      "emoji": "emoji",
+      "title": "titolo accattivante (max 5 parole)",
+      "insight": "spiegazione coinvolgente con NUMERI SPECIFICI e percentuali REALI dai pattern trovati sopra. Spiega perché è sorprendente/contro-intuitivo",
+      "emoji": "emoji appropriato",
       "type": "paradox|behavioral|psychological|temporal|demographic|correlation",
-      "strength": 1-5,
-      "evidence": "evidenza specifica dai dati"
+      "strength": 3-5 (solo insight forti!),
+      "evidence": "evidenza specifica con numeri dai dati analizzati"
     }
   ],
   "mainTrend": {
-    "title": "trend principale trovato",
-    "description": "descrizione dettagliata",
-    "significance": "perché è importante"
+    "title": "il pattern PIÙ sorprendente/importante",
+    "description": "descrizione dettagliata con numeri specifici",
+    "significance": "perché questo cambia la nostra comprensione del fenomeno"
   },
   "funFact": {
-    "fact": "fatto interessante VERIFICATO dai dati",
+    "fact": "fatto WOW verificato dai dati che fa dire 'incredibile!'",
     "emoji": "emoji",
-    "explanation": "spiegazione"
+    "explanation": "context che rende il fatto ancora più interessante"
   },
-  "methodology": "Analisi completa su ${fullData.totalParticipants} partecipanti con chunking analysis"
+  "methodology": "Analisi AI approfondita su ${fullData.totalParticipants} partecipanti con chunking multi-level"
 }
 
-Genera 8-9 curiosities basate sui pattern più forti trovati.`;
+Genera ESATTAMENTE 8-9 curiosities basate SOLO sui pattern più forti, sorprendenti e non-ovvi trovati.
+Ogni insight deve essere UNICO (niente duplicati!) e basato su DATI REALI dai pattern analizzati.`;
 
   try {
     let response, data, responseText;
