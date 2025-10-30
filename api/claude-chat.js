@@ -14,12 +14,12 @@ export default async function handler(req, res) {
   }
 
   // Check if API key is configured in environment
-  const apiKey = process.env.CLAUDE_API_KEY;
-  
+  const apiKey = process.env.OPENAI_API_KEY;
+
   if (!apiKey) {
-    return res.status(500).json({ 
-      error: 'Claude API key not configured',
-      message: 'Please set CLAUDE_API_KEY in Vercel environment variables'
+    return res.status(500).json({
+      error: 'OpenAI API key not configured',
+      message: 'Please set OPENAI_API_KEY in Vercel environment variables'
     });
   }
 
@@ -48,8 +48,10 @@ IMPORTANTE:
 - Se trovi pattern curiosi, evidenziali
 - Usa emoji per rendere la risposta più friendly`;
 
-    // Build messages array with conversation history (no system role in messages)
-    const messages = [];
+    // Build messages array with system prompt first (OpenAI format)
+    const messages = [
+      { role: "system", content: systemPrompt }
+    ];
 
     // Add conversation history if available
     if (conversationHistory && conversationHistory.length > 0) {
@@ -66,18 +68,17 @@ IMPORTANTE:
     // Add current message
     messages.push({ role: "user", content: message });
 
-    // Call Claude API with system as a separate parameter
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    // Call OpenAI API
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01"
+        "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "claude-3-5-sonnet-20240620",
+        model: "gpt-4o",
         max_tokens: 1000,
-        system: systemPrompt,  // System prompt as a separate parameter
+        temperature: 0.7,
         messages: messages
       })
     });
@@ -90,25 +91,25 @@ IMPORTANTE:
       } catch (e) {
         errorData = { error: { message: errorText } };
       }
-      console.error('Claude API error details:', {
+      console.error('OpenAI API error details:', {
         status: response.status,
         statusText: response.statusText,
         error: errorData,
-        requestBody: { model: "claude-3-5-sonnet-20240620", messageCount: messages.length }
+        requestBody: { model: "gpt-4o", messageCount: messages.length }
       });
-      throw new Error(errorData.error?.message || `Claude API call failed with status ${response.status}`);
+      throw new Error(errorData.error?.message || `OpenAI API call failed with status ${response.status}`);
     }
 
     const data = await response.json();
-    
+
     return res.status(200).json({
       success: true,
-      response: data.content[0].text
+      response: data.choices[0].message.content
     });
     
   } catch (error) {
-    console.error('Claude Chat Error:', error);
-    return res.status(500).json({ 
+    console.error('Chat Error:', error);
+    return res.status(500).json({
       error: 'Failed to process chat message',
       message: error.message
     });
