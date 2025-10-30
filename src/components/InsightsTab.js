@@ -231,11 +231,9 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
         dataHash: dataHash // Include hash for backend caching
       };
 
-      // Call server-side API endpoint (Railway for long-running analysis, or Vercel fallback)
-      const apiUrl = process.env.REACT_APP_INSIGHTS_API_URL || "/api/claude-insights";
-      const endpoint = process.env.REACT_APP_INSIGHTS_API_URL
-        ? `${apiUrl}/api/insights`
-        : apiUrl;
+      // Always use Vercel API route to avoid CORS issues
+      // The Vercel route will handle the long-running analysis properly
+      const endpoint = "/api/claude-insights";
 
       console.log(`Calling insights API: ${endpoint}`);
 
