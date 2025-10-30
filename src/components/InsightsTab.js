@@ -91,11 +91,9 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
     }
   }, []);
 
-  useEffect(() => {
-    if (participants.length > 5 && !insights) {
-      generateInsights();
-    }
-  }, [participants]);
+  // REMOVED: Automatic insight generation on mount - causes infinite loop
+  // Users must now manually trigger insight generation via the button
+  // This prevents multiple concurrent API calls and respects the 10% change threshold
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
