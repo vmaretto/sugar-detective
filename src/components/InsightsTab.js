@@ -145,9 +145,15 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
   };
 
   const generateInsights = async () => {
+    // Previeni chiamate multiple simultanee
+    if (loading) {
+      console.log('Generation already in progress, ignoring click');
+      return;
+    }
+
     setLoading(true);
     setError(null);
-    
+
     try {
       // Prepare aggregated data for analysis
       const aggregatedData = {
@@ -870,14 +876,16 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
         </p>
         <button
           onClick={generateInsights}
+          disabled={loading}
           style={{
             padding: '0.75rem 1.5rem',
-            background: '#667eea',
+            background: loading ? '#9ca3af' : '#667eea',
             color: 'white',
             border: 'none',
             borderRadius: '10px',
-            cursor: 'pointer',
-            fontWeight: '600'
+            cursor: loading ? 'not-allowed' : 'pointer',
+            fontWeight: '600',
+            opacity: loading ? 0.6 : 1
           }}
         >
           {language === 'it' ? 'Riprova' : 'Try Again'}
@@ -894,18 +902,20 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
       }}>
         <button
           onClick={generateInsights}
+          disabled={loading}
           style={{
             padding: '1rem 2rem',
-            background: '#667eea',
+            background: loading ? '#9ca3af' : '#667eea',
             color: 'white',
             border: 'none',
             borderRadius: '10px',
             fontSize: '1.125rem',
             fontWeight: '600',
-            cursor: 'pointer',
+            cursor: loading ? 'not-allowed' : 'pointer',
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '0.5rem'
+            gap: '0.5rem',
+            opacity: loading ? 0.6 : 1
           }}
         >
           <Sparkles size={24} />
@@ -1011,25 +1021,28 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
 
           <button
             onClick={generateInsights}
-            disabled={!canRegenerateInsights()}
-            title={!canRegenerateInsights()
-              ? (language === 'it'
-                  ? `Rigenerazione disponibile quando i dati cambiano di almeno il 10%. Attualmente: ${calculateDataChangePercentage().toFixed(1)}%`
-                  : `Regeneration available when data changes by at least 10%. Currently: ${calculateDataChangePercentage().toFixed(1)}%`)
-              : ''
+            disabled={!canRegenerateInsights() || loading}
+            title={
+              loading
+                ? (language === 'it' ? 'Generazione in corso...' : 'Generation in progress...')
+                : !canRegenerateInsights()
+                  ? (language === 'it'
+                      ? `Rigenerazione disponibile quando i dati cambiano di almeno il 10%. Attualmente: ${calculateDataChangePercentage().toFixed(1)}%`
+                      : `Regeneration available when data changes by at least 10%. Currently: ${calculateDataChangePercentage().toFixed(1)}%`)
+                  : ''
             }
             style={{
               padding: '0.5rem 1rem',
-              background: canRegenerateInsights() ? '#10b981' : '#9ca3af',
+              background: (canRegenerateInsights() && !loading) ? '#10b981' : '#9ca3af',
               color: 'white',
               border: 'none',
               borderRadius: '10px',
-              cursor: canRegenerateInsights() ? 'pointer' : 'not-allowed',
+              cursor: (canRegenerateInsights() && !loading) ? 'pointer' : 'not-allowed',
               fontWeight: '600',
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
-              opacity: canRegenerateInsights() ? 1 : 0.6
+              opacity: (canRegenerateInsights() && !loading) ? 1 : 0.6
             }}
           >
             <Sparkles size={18} />
