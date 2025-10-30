@@ -47,9 +47,10 @@ export default async function handler(req, res) {
     }
 
     // CHUNKING STRATEGY
-    // Larger chunks with longer delays to respect 50k tokens/minute rate limit
-    const CHUNK_SIZE = 50; // ~10000-12000 tokens per chunk
-    const DELAY_BETWEEN_CHUNKS = 12000; // 12 seconds = 5 chunks per minute max
+    // Ultra-conservative settings to respect API acceleration limits
+    // (prevents "usage increase rate" errors on new/low-usage accounts)
+    const CHUNK_SIZE = 25; // ~5000-6000 tokens per chunk (smaller chunks)
+    const DELAY_BETWEEN_CHUNKS = 25000; // 25 seconds = ~2.4 chunks per minute (very gradual)
     const chunks = [];
 
     // Create chunks
