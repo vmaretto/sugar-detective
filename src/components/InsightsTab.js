@@ -121,6 +121,31 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
     };
   };
 
+  // Funzione per generare un hash stabile dei dati (per cache backend)
+  const generateDataHash = (participantsData) => {
+    // Crea un hash basato su:
+    // 1. Numero di partecipanti
+    // 2. ID/timestamp ordinati
+    // 3. Somma delle chiavi di misurazione
+    const ids = participantsData.map(p => p.id || p.timestamp).sort().join(',');
+    const measurementCounts = participantsData.map(p =>
+      Object.keys(p.data?.measurements || {}).length
+    ).join(',');
+    const responseCounts = participantsData.map(p =>
+      Object.keys(p.data?.part2 || {}).length
+    ).join(',');
+
+    // Simple hash function (non-cryptographic, just for cache key)
+    const str = `${participantsData.length}:${ids}:${measurementCounts}:${responseCounts}`;
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash).toString(36);
+  };
+
   // Funzione per calcolare la percentuale di cambiamento
   const calculateDataChangePercentage = () => {
     if (!dataSnapshot) return 100; // Se non c'è snapshot, permetti rigenerazione
@@ -158,6 +183,37 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
       return;
     }
 
+    // Genera hash dei dati
+    const dataHash = generateDataHash(participants);
+    console.log('[InsightsTab] Data hash:', dataHash);
+
+    // Check localStorage cache first
+    const cachedInsights = localStorage.getItem(`insights_cache_${dataHash}`);
+    if (cachedInsights) {
+      try {
+        const parsed = JSON.parse(cachedInsights);
+        const cacheAge = Date.now() - new Date(parsed.generatedAt).getTime();
+        const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 giorni
+
+        if (cacheAge < maxAge) {
+          console.log('[InsightsTab] ✓ Found valid cached insights (age: ' + Math.round(cacheAge / 1000 / 60) + ' minutes)');
+          setInsights(parsed);
+          setApiConfigured(true);
+
+          // Update snapshot
+          const snapshot = createDataSnapshot(participants);
+          setDataSnapshot(snapshot);
+          localStorage.setItem('data_snapshot', JSON.stringify(snapshot));
+          return;
+        } else {
+          console.log('[InsightsTab] ⚠️ Cached insights too old, regenerating');
+          localStorage.removeItem(`insights_cache_${dataHash}`);
+        }
+      } catch (e) {
+        console.error('[InsightsTab] Error reading cache:', e);
+      }
+    }
+
     console.log('[InsightsTab] ✓ Starting new insight generation...');
     setLoading(true);
     setError(null);
@@ -171,7 +227,8 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
         correlations: extractCorrelations(participants),
         participants: participants, // Include raw participants for chunking analysis
         timestamp: new Date().toISOString(),
-        note: 'Thursday data excluded (test data)'
+        note: 'Thursday data excluded (test data)',
+        dataHash: dataHash // Include hash for backend caching
       };
 
       // Call server-side API endpoint (Railway for long-running analysis, or Vercel fallback)
@@ -217,6 +274,10 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
       setInsights(claudeInsights);
       setApiConfigured(true);
 
+      // Save to cache with hash
+      localStorage.setItem(`insights_cache_${dataHash}`, JSON.stringify(claudeInsights));
+      console.log('[InsightsTab] ✓ Insights saved to cache with hash:', dataHash);
+
       // Save to history
       const newHistory = [claudeInsights, ...insightHistory].slice(0, 10);
       setInsightHistory(newHistory);
@@ -234,6 +295,10 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
       // Generate local insights as fallback
       const localInsights = generateLocalInsights(participants);
       setInsights(localInsights);
+
+      // Save to cache with hash (even for fallback insights)
+      localStorage.setItem(`insights_cache_${dataHash}`, JSON.stringify(localInsights));
+      console.log('[InsightsTab] ✓ Fallback insights saved to cache with hash:', dataHash);
 
       // Salva snapshot anche per insights locali
       const snapshot = createDataSnapshot(participants);

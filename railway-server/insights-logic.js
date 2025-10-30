@@ -3,6 +3,26 @@
 // api/claude-insights.js - Chunked Analysis Version with OpenAI GPT-4o
 // Analizza TUTTI i dati raw dividendoli in blocchi per evitare rate limits
 
+// In-memory cache for insights (keyed by dataHash)
+const insightsCache = new Map();
+const CACHE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
+const CACHE_MAX_SIZE = 100; // Keep only last 100 analyses
+
+// Clean old cache entries periodically
+setInterval(() => {
+  const now = Date.now();
+  let deleted = 0;
+  for (const [hash, entry] of insightsCache.entries()) {
+    if (now - entry.timestamp > CACHE_MAX_AGE) {
+      insightsCache.delete(hash);
+      deleted++;
+    }
+  }
+  if (deleted > 0) {
+    console.log(`[Cache] Cleaned ${deleted} expired entries`);
+  }
+}, 60 * 60 * 1000); // Check every hour
+
 async function handler(req, res) {
   const requestId = Date.now();
   console.log(`\n[${new Date().toISOString()}] [Request ${requestId}] New insights request received`);
@@ -37,9 +57,30 @@ async function handler(req, res) {
   try {
     const { aggregatedData, language } = req.body;
     console.log(`[Request ${requestId}] Received data: ${aggregatedData?.participants?.length || 0} participants`);
-    
+
     if (!aggregatedData) {
       return res.status(400).json({ error: 'Missing aggregated data' });
+    }
+
+    // Check cache first if dataHash is provided
+    const dataHash = aggregatedData.dataHash;
+    if (dataHash && insightsCache.has(dataHash)) {
+      const cached = insightsCache.get(dataHash);
+      const age = Date.now() - cached.timestamp;
+
+      if (age < CACHE_MAX_AGE) {
+        console.log(`[Request ${requestId}] ✓ Cache HIT for hash ${dataHash} (age: ${Math.round(age / 1000 / 60)} minutes)`);
+        return res.status(200).json({
+          ...cached.insights,
+          fromCache: true,
+          cacheAge: age
+        });
+      } else {
+        console.log(`[Request ${requestId}] Cache entry expired for hash ${dataHash}`);
+        insightsCache.delete(dataHash);
+      }
+    } else if (dataHash) {
+      console.log(`[Request ${requestId}] Cache MISS for hash ${dataHash}`);
     }
 
     const isItalian = language === 'it';
@@ -145,6 +186,22 @@ async function handler(req, res) {
     finalInsights.chunksAnalyzed = chunks.length;
     finalInsights.analysisTimeSeconds = parseFloat(totalTime);
     finalInsights.aiProvider = useOpenAI ? 'OpenAI GPT-4o' : 'Claude Haiku';
+
+    // Save to cache if dataHash is provided
+    if (dataHash) {
+      // Limit cache size
+      if (insightsCache.size >= CACHE_MAX_SIZE) {
+        const oldestKey = insightsCache.keys().next().value;
+        insightsCache.delete(oldestKey);
+        console.log(`[Request ${requestId}] Cache full, removed oldest entry`);
+      }
+
+      insightsCache.set(dataHash, {
+        insights: finalInsights,
+        timestamp: Date.now()
+      });
+      console.log(`[Request ${requestId}] ✓ Insights saved to cache with hash ${dataHash} (cache size: ${insightsCache.size})`);
+    }
 
     return res.status(200).json(finalInsights);
     
