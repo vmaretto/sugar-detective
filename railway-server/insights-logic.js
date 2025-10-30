@@ -4,6 +4,9 @@
 // Analizza TUTTI i dati raw dividendoli in blocchi per evitare rate limits
 
 async function handler(req, res) {
+  const requestId = Date.now();
+  console.log(`\n[${new Date().toISOString()}] [Request ${requestId}] New insights request received`);
+
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -22,16 +25,18 @@ async function handler(req, res) {
   const useOpenAI = !!process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
+    console.error(`[Request ${requestId}] API key not configured`);
     return res.status(500).json({
       error: 'API key not configured',
-      message: 'Please set OPENAI_API_KEY or CLAUDE_API_KEY in Vercel environment variables'
+      message: 'Please set OPENAI_API_KEY or CLAUDE_API_KEY in Railway environment variables'
     });
   }
 
-  console.log(`Using ${useOpenAI ? 'OpenAI GPT-4o' : 'Claude API'} for analysis`);
+  console.log(`[Request ${requestId}] Using ${useOpenAI ? 'OpenAI GPT-4o' : 'Claude API'} for analysis`);
 
   try {
     const { aggregatedData, language } = req.body;
+    console.log(`[Request ${requestId}] Received data: ${aggregatedData?.participants?.length || 0} participants`);
     
     if (!aggregatedData) {
       return res.status(400).json({ error: 'Missing aggregated data' });
@@ -54,7 +59,7 @@ async function handler(req, res) {
     // CHUNKING STRATEGY
     // OpenAI (GPT-4o) has more generous rate limits than Claude
     const CHUNK_SIZE = useOpenAI ? 50 : 25; // OpenAI: 50 (~10k tokens), Claude: 25 (~5k tokens)
-    const DELAY_BETWEEN_CHUNKS = useOpenAI ? 10000 : 25000; // OpenAI: 10s, Claude: 25s
+    const DELAY_BETWEEN_CHUNKS = useOpenAI ? 5000 : 15000; // OpenAI: 5s, Claude: 15s (reduced to prevent timeout)
     const chunks = [];
 
     // Create chunks
@@ -144,9 +149,11 @@ async function handler(req, res) {
     return res.status(200).json(finalInsights);
     
   } catch (error) {
-    console.error('Analysis error:', error);
-    
-    // Return fallback insights
+    console.error(`[Request ${requestId}] Critical analysis error:`, error.message);
+    console.error(`[Request ${requestId}] Error stack:`, error.stack);
+
+    // Return fallback insights on error
+    console.log(`[Request ${requestId}] Returning fallback insights due to error`);
     return res.status(200).json(generateFallbackInsights(req.body.aggregatedData, req.body.language));
   }
 }
@@ -309,8 +316,11 @@ async function synthesizeInsights(chunkInsights, fullData, apiKey, isItalian, us
   const allAnomalies = chunkInsights.flatMap(c => c.anomalies || []);
   const allCorrelations = chunkInsights.flatMap(c => c.correlations || []);
   
+  // Calculate total participants safely
+  const totalParticipants = fullData.participants?.length || 0;
+
   // Prepare synthesis prompt
-  const synthesisPrompt = `Sei un data scientist esperto. Sintetizza questi pattern trovati analizzando ${fullData.totalParticipants} partecipanti in ${chunkInsights.length} gruppi.
+  const synthesisPrompt = `Sei un data scientist esperto. Sintetizza questi pattern trovati analizzando ${totalParticipants} partecipanti in ${chunkInsights.length} gruppi.
 
 PATTERN TROVATI (${allPatterns.length} totali):
 ${JSON.stringify(allPatterns.slice(0, 20))}
@@ -322,7 +332,7 @@ CORRELAZIONI (${allCorrelations.length} totali):
 ${JSON.stringify(allCorrelations.slice(0, 10))}
 
 STATISTICHE GLOBALI:
-- Partecipanti totali: ${fullData.totalParticipants}
+- Partecipanti totali: ${totalParticipants}
 - Demografia: ${JSON.stringify(fullData.demographics || {}).substring(0, 200)}
 - Pattern: ${JSON.stringify(fullData.patterns || {}).substring(0, 200)}
 
@@ -351,7 +361,7 @@ IMPORTANTE: Rispondi SOLO con JSON valido:
     "emoji": "emoji",
     "explanation": "spiegazione"
   },
-  "methodology": "Analisi completa su ${fullData.totalParticipants} partecipanti con chunking analysis"
+  "methodology": "Analisi completa su ${totalParticipants} partecipanti con chunking analysis"
 }
 
 Genera 8-9 curiosities basate sui pattern più forti trovati.`;
@@ -473,18 +483,19 @@ Genera 8-9 curiosities basate sui pattern più forti trovati.`;
 // Fallback insights if API fails
 function generateFallbackInsights(aggregatedData, language) {
   const isItalian = language === 'it';
-  
+  const totalParticipants = aggregatedData.participants?.length || 0;
+
   return {
     curiosities: [
       {
         title: isItalian ? "Partecipazione record" : "Record participation",
-        insight: isItalian 
-          ? `${aggregatedData.totalParticipants} persone hanno completato il test con un tasso di completamento del 99%`
-          : `${aggregatedData.totalParticipants} people completed the test with a 99% completion rate`,
+        insight: isItalian
+          ? `${totalParticipants} persone hanno completato il test con un tasso di completamento del 99%`
+          : `${totalParticipants} people completed the test with a 99% completion rate`,
         emoji: "🎯",
         type: "demographic",
         strength: 5,
-        evidence: `n=${aggregatedData.totalParticipants}, completion=99%`
+        evidence: `n=${totalParticipants}, completion=99%`
       },
       {
         title: isItalian ? "Score medio 59.1%" : "Average score 59.1%",
@@ -530,16 +541,16 @@ function generateFallbackInsights(aggregatedData, language) {
     mainTrend: {
       title: isItalian ? "Alta partecipazione e completamento" : "High participation and completion",
       description: isItalian
-        ? `Con ${aggregatedData.totalParticipants} partecipanti e 99% di completamento, l'esperimento mostra eccellente engagement`
-        : `With ${aggregatedData.totalParticipants} participants and 99% completion, the experiment shows excellent engagement`,
+        ? `Con ${totalParticipants} partecipanti e 99% di completamento, l'esperimento mostra eccellente engagement`
+        : `With ${totalParticipants} participants and 99% completion, the experiment shows excellent engagement`,
       significance: isItalian
         ? "I dati raccolti sono statisticamente significativi e affidabili"
         : "The collected data is statistically significant and reliable"
     },
     funFact: {
       fact: isItalian
-        ? `Abbiamo ${aggregatedData.totalParticipants} sugar detective!`
-        : `We have ${aggregatedData.totalParticipants} sugar detectives!`,
+        ? `Abbiamo ${totalParticipants} sugar detective!`
+        : `We have ${totalParticipants} sugar detectives!`,
       emoji: "🕵️",
       explanation: isItalian
         ? "Un risultato straordinario per la ricerca"

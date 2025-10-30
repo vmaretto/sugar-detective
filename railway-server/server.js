@@ -8,6 +8,13 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
+// Increase timeout for long-running requests
+app.use((req, res, next) => {
+  req.setTimeout(120000); // 120 seconds
+  res.setTimeout(120000); // 120 seconds
+  next();
+});
+
 // Import the insights logic
 const insightsLogic = require('./insights-logic.js');
 
