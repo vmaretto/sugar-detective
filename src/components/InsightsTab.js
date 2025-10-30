@@ -204,7 +204,15 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
       }
 
       const data = await response.json();
-      const claudeInsights = data.insights;
+      // The Railway API returns the insights object directly, not wrapped in { insights: {...} }
+      const claudeInsights = data;
+
+      console.log('[InsightsTab] ✓ Received insights:', {
+        hasCuriosities: !!claudeInsights?.curiosities,
+        curiositiesCount: claudeInsights?.curiosities?.length || 0,
+        hasMainTrend: !!claudeInsights?.mainTrend,
+        hasFunFact: !!claudeInsights?.funFact
+      });
 
       setInsights(claudeInsights);
       setApiConfigured(true);
