@@ -75,7 +75,7 @@ IMPORTANTE:
         "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-3-5-sonnet-20240620",
         max_tokens: 1000,
         system: systemPrompt,  // System prompt as a separate parameter
         messages: messages
@@ -83,9 +83,20 @@ IMPORTANTE:
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Claude API error:', errorData);
-      throw new Error(errorData.error?.message || 'Claude API call failed');
+      const errorText = await response.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch (e) {
+        errorData = { error: { message: errorText } };
+      }
+      console.error('Claude API error details:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+        requestBody: { model: "claude-3-5-sonnet-20240620", messageCount: messages.length }
+      });
+      throw new Error(errorData.error?.message || `Claude API call failed with status ${response.status}`);
     }
 
     const data = await response.json();

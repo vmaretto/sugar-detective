@@ -283,26 +283,44 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to get response');
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          errorData = { message: `HTTP ${response.status}: ${response.statusText}` };
+        }
+        console.error('[Chat] API error details:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
+        throw new Error(errorData.message || errorData.error || 'Failed to get response');
       }
 
       const data = await response.json();
-      
+      console.log('[Chat] ✓ Received response:', {
+        responseLength: data.response?.length,
+        hasResponse: !!data.response
+      });
+
       const assistantMessage = {
         role: 'assistant',
         content: data.response,
         timestamp: new Date().toISOString()
       };
-      
+
       const updatedMessages = [...newMessages, assistantMessage];
       setChatMessages(updatedMessages);
-      
+
       // Save chat history
       localStorage.setItem('insight_chat_history', JSON.stringify(updatedMessages.slice(-50)));
-      
+
     } catch (err) {
-      console.error('Chat error:', err);
+      console.error('[Chat] Error details:', {
+        message: err.message,
+        stack: err.stack,
+        type: err.constructor.name
+      });
       
       const errorMessage = {
         role: 'assistant',
