@@ -770,8 +770,8 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
           margin: '1rem auto 0'
         }}>
           {language === 'it'
-            ? '⏱️ Analisi approfondita in corso su tutti i 250+ partecipanti. Può richiedere 4-5 minuti. Non chiudere la pagina!'
-            : '⏱️ Deep analysis in progress on all 250+ participants. May take 4-5 minutes. Don\'t close the page!'}
+            ? '⏱️ Analisi approfondita in corso su tutti i 250+ partecipanti. Può richiedere 1-2 minuti (OpenAI) o 4-5 minuti (Claude). Non chiudere la pagina!'
+            : '⏱️ Deep analysis in progress on all 250+ participants. May take 1-2 minutes (OpenAI) or 4-5 minutes (Claude). Don\'t close the page!'}
         </p>
         <p style={{
           fontSize: '0.75rem',

@@ -1,4 +1,4 @@
-// api/claude-insights.js - Chunked Analysis Version
+// api/claude-insights.js - Chunked Analysis Version with OpenAI GPT-4
 // Analizza TUTTI i dati raw dividendoli in blocchi per evitare rate limits
 
 export default async function handler(req, res) {
@@ -15,15 +15,18 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Check API key
-  const apiKey = process.env.CLAUDE_API_KEY;
-  
+  // Check API key - try OpenAI first, fallback to Claude
+  const apiKey = process.env.OPENAI_API_KEY || process.env.CLAUDE_API_KEY;
+  const useOpenAI = !!process.env.OPENAI_API_KEY;
+
   if (!apiKey) {
-    return res.status(500).json({ 
-      error: 'Claude API key not configured',
-      message: 'Please set CLAUDE_API_KEY in Vercel environment variables'
+    return res.status(500).json({
+      error: 'API key not configured',
+      message: 'Please set OPENAI_API_KEY or CLAUDE_API_KEY in Vercel environment variables'
     });
   }
+
+  console.log(`Using ${useOpenAI ? 'OpenAI GPT-4' : 'Claude API'} for analysis`);
 
   try {
     const { aggregatedData, language } = req.body;
@@ -47,10 +50,9 @@ export default async function handler(req, res) {
     }
 
     // CHUNKING STRATEGY
-    // Ultra-conservative settings to respect API acceleration limits
-    // (prevents "usage increase rate" errors on new/low-usage accounts)
-    const CHUNK_SIZE = 25; // ~5000-6000 tokens per chunk (smaller chunks)
-    const DELAY_BETWEEN_CHUNKS = 25000; // 25 seconds = ~2.4 chunks per minute (very gradual)
+    // OpenAI has more generous rate limits than Claude
+    const CHUNK_SIZE = useOpenAI ? 50 : 25; // OpenAI: 50 (~10k tokens), Claude: 25 (~5k tokens)
+    const DELAY_BETWEEN_CHUNKS = useOpenAI ? 5000 : 25000; // OpenAI: 5s, Claude: 25s
     const chunks = [];
 
     // Create chunks
@@ -77,7 +79,7 @@ export default async function handler(req, res) {
       console.log(`\n[${new Date().toISOString()}] Analyzing chunk ${chunk.index}/${chunks.length} (participants ${chunk.startIdx + 1}-${chunk.endIdx})`);
 
       try {
-        const insights = await analyzeChunk(chunk, chunks.length, apiKey, isItalian);
+        const insights = await analyzeChunk(chunk, chunks.length, apiKey, isItalian, useOpenAI);
         chunkInsights.push(insights);
 
         const chunkDuration = ((Date.now() - chunkStartTime) / 1000).toFixed(1);
@@ -109,7 +111,8 @@ export default async function handler(req, res) {
       chunkInsights,
       aggregatedData,
       apiKey,
-      isItalian
+      isItalian,
+      useOpenAI
     );
 
     const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -125,6 +128,7 @@ export default async function handler(req, res) {
     finalInsights.analysisMethod = 'complete_chunk_analysis';
     finalInsights.chunksAnalyzed = chunks.length;
     finalInsights.analysisTimeSeconds = parseFloat(totalTime);
+    finalInsights.aiProvider = useOpenAI ? 'OpenAI GPT-4' : 'Claude Haiku';
 
     return res.status(200).json(finalInsights);
     
@@ -137,7 +141,7 @@ export default async function handler(req, res) {
 }
 
 // Analyze individual chunk
-async function analyzeChunk(chunk, totalChunks, apiKey, isItalian) {
+async function analyzeChunk(chunk, totalChunks, apiKey, isItalian, useOpenAI = false) {
   const prompt = `Analizza nel dettaglio questi ${chunk.data.length} partecipanti (gruppo ${chunk.index} di ${totalChunks}).
 
 DATI RAW COMPLETI DEL GRUPPO:
@@ -186,37 +190,73 @@ Rispondi SOLO con JSON valido in questo formato:
 }`;
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01"
-      },
-      body: JSON.stringify({
-        model: "claude-3-haiku-20240307",
-        max_tokens: 1500,
-        temperature: 0.5,
-        messages: [{
-          role: "user",
-          content: prompt
-        }]
-      })
-    });
+    let response, data, responseText;
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error?.message || 'Claude API error');
+    if (useOpenAI) {
+      // OpenAI GPT-4 API call
+      response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4",
+          messages: [{
+            role: "user",
+            content: prompt
+          }],
+          max_tokens: 1500,
+          temperature: 0.5,
+          response_format: { type: "json_object" }
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error?.message || 'OpenAI API error');
+      }
+
+      data = await response.json();
+      responseText = data.choices[0].message.content;
+
+    } else {
+      // Claude API call (fallback)
+      response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model: "claude-3-haiku-20240307",
+          max_tokens: 1500,
+          temperature: 0.5,
+          messages: [{
+            role: "user",
+            content: prompt
+          }]
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error?.message || 'Claude API error');
+      }
+
+      data = await response.json();
+      responseText = data.content[0].text;
     }
 
-    const data = await response.json();
-    const responseText = data.content[0].text
+    // Clean and parse response
+    const cleanedText = responseText
       .replace(/```json\s*/gi, '')
       .replace(/```\s*/gi, '')
       .trim();
-    
-    return JSON.parse(responseText);
-    
+
+    return JSON.parse(cleanedText);
+
   } catch (error) {
     console.error('Chunk analysis error:', error);
     return {
@@ -229,7 +269,7 @@ Rispondi SOLO con JSON valido in questo formato:
 }
 
 // Synthesize all chunk insights into final analysis
-async function synthesizeInsights(chunkInsights, fullData, apiKey, isItalian) {
+async function synthesizeInsights(chunkInsights, fullData, apiKey, isItalian, useOpenAI = false) {
   // Aggregate all findings
   const allPatterns = chunkInsights.flatMap(c => c.patterns || []);
   const allAnomalies = chunkInsights.flatMap(c => c.anomalies || []);
@@ -283,43 +323,79 @@ IMPORTANTE: Rispondi SOLO con JSON valido:
 Genera 8-9 curiosities basate sui pattern più forti trovati.`;
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01"
-      },
-      body: JSON.stringify({
-        model: "claude-3-haiku-20240307",
-        max_tokens: 2000,
-        temperature: 0.7,
-        messages: [{
-          role: "user",
-          content: synthesisPrompt
-        }]
-      })
-    });
+    let response, data, responseText;
 
-    if (!response.ok) {
-      throw new Error('Synthesis API error');
+    if (useOpenAI) {
+      // OpenAI GPT-4 API call
+      response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4",
+          messages: [{
+            role: "user",
+            content: synthesisPrompt
+          }],
+          max_tokens: 2000,
+          temperature: 0.7,
+          response_format: { type: "json_object" }
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error?.message || 'OpenAI Synthesis API error');
+      }
+
+      data = await response.json();
+      responseText = data.choices[0].message.content;
+
+    } else {
+      // Claude API call (fallback)
+      response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model: "claude-3-haiku-20240307",
+          max_tokens: 2000,
+          temperature: 0.7,
+          messages: [{
+            role: "user",
+            content: synthesisPrompt
+          }]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Claude Synthesis API error');
+      }
+
+      data = await response.json();
+      responseText = data.content[0].text;
     }
 
-    const data = await response.json();
-    const responseText = data.content[0].text
+    // Clean and parse response
+    const cleanedText = responseText
       .replace(/```json\s*/gi, '')
       .replace(/```\s*/gi, '')
       .trim();
-    
-    const insights = JSON.parse(responseText);
-    
+
+    const insights = JSON.parse(cleanedText);
+
     // Ensure we have valid structure
     if (!insights.curiosities || insights.curiosities.length === 0) {
       throw new Error('Invalid insights structure');
     }
-    
+
     return insights;
-    
+
   } catch (error) {
     console.error('Synthesis error:', error);
     return generateFallbackInsights(fullData, isItalian ? 'it' : 'en');
