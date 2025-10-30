@@ -1,4 +1,4 @@
-// api/claude-insights.js - Chunked Analysis Version with OpenAI GPT-4
+// api/claude-insights.js - Chunked Analysis Version with OpenAI GPT-4o
 // Analizza TUTTI i dati raw dividendoli in blocchi per evitare rate limits
 
 export default async function handler(req, res) {
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     });
   }
 
-  console.log(`Using ${useOpenAI ? 'OpenAI GPT-4' : 'Claude API'} for analysis`);
+  console.log(`Using ${useOpenAI ? 'OpenAI GPT-4o' : 'Claude API'} for analysis`);
 
   try {
     const { aggregatedData, language } = req.body;
@@ -50,9 +50,9 @@ export default async function handler(req, res) {
     }
 
     // CHUNKING STRATEGY
-    // OpenAI has more generous rate limits than Claude
+    // OpenAI (GPT-4o) has more generous rate limits than Claude
     const CHUNK_SIZE = useOpenAI ? 50 : 25; // OpenAI: 50 (~10k tokens), Claude: 25 (~5k tokens)
-    const DELAY_BETWEEN_CHUNKS = useOpenAI ? 5000 : 25000; // OpenAI: 5s, Claude: 25s
+    const DELAY_BETWEEN_CHUNKS = useOpenAI ? 10000 : 25000; // OpenAI: 10s, Claude: 25s
     const chunks = [];
 
     // Create chunks
@@ -137,7 +137,7 @@ export default async function handler(req, res) {
     finalInsights.analysisMethod = 'complete_chunk_analysis';
     finalInsights.chunksAnalyzed = chunks.length;
     finalInsights.analysisTimeSeconds = parseFloat(totalTime);
-    finalInsights.aiProvider = useOpenAI ? 'OpenAI GPT-4' : 'Claude Haiku';
+    finalInsights.aiProvider = useOpenAI ? 'OpenAI GPT-4o' : 'Claude Haiku';
 
     return res.status(200).json(finalInsights);
     
@@ -202,7 +202,7 @@ Rispondi SOLO con JSON valido in questo formato:
     let response, data, responseText;
 
     if (useOpenAI) {
-      // OpenAI GPT-4 API call
+      // OpenAI GPT-4o API call
       response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -210,7 +210,7 @@ Rispondi SOLO con JSON valido in questo formato:
           "Authorization": `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: "gpt-4",
+          model: "gpt-4o",
           messages: [{
             role: "user",
             content: prompt
@@ -358,8 +358,8 @@ Genera 8-9 curiosities basate sui pattern più forti trovati.`;
     let response, data, responseText;
 
     if (useOpenAI) {
-      // OpenAI GPT-4 API call
-      console.log('  Calling OpenAI API for synthesis...');
+      // OpenAI GPT-4o API call
+      console.log('  Calling OpenAI GPT-4o for synthesis...');
       response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -367,7 +367,7 @@ Genera 8-9 curiosities basate sui pattern più forti trovati.`;
           "Authorization": `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: "gpt-4",
+          model: "gpt-4o",
           messages: [{
             role: "user",
             content: synthesisPrompt
