@@ -38,6 +38,7 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
   const [favoriteInsights, setFavoriteInsights] = useState([]);
   const [apiConfigured, setApiConfigured] = useState(true);
   const [dataSnapshot, setDataSnapshot] = useState(null); // Snapshot dei dati quando gli insight sono generati
+  const hasAttemptedGeneration = useRef(false); // Flag per prevenire rigenerazioni automatiche
 
   // Chat state
   const [showChat, setShowChat] = useState(false);
@@ -91,9 +92,14 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
     }
   }, []);
 
-  // REMOVED: Automatic insight generation on mount - causes infinite loop
-  // Users must now manually trigger insight generation via the button
-  // This prevents multiple concurrent API calls and respects the 10% change threshold
+  // Auto-generate insights on initial mount ONLY ONCE
+  useEffect(() => {
+    if (participants.length > 5 && !insights && !loading && !hasAttemptedGeneration.current) {
+      console.log('[InsightsTab] Initial mount - auto-generating insights (one time only)');
+      hasAttemptedGeneration.current = true; // Set flag BEFORE calling to prevent race conditions
+      generateInsights();
+    }
+  }, []); // Empty deps - runs only on mount
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -143,12 +149,16 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
   };
 
   const generateInsights = async () => {
+    console.log('[InsightsTab] generateInsights() called - checking conditions...');
+    console.log('[InsightsTab] Current state: loading=', loading, ', insights=', !!insights);
+
     // Previeni chiamate multiple simultanee
     if (loading) {
-      console.log('Generation already in progress, ignoring click');
+      console.log('[InsightsTab] ⚠️ Generation already in progress, ignoring call');
       return;
     }
 
+    console.log('[InsightsTab] ✓ Starting new insight generation...');
     setLoading(true);
     setError(null);
 
