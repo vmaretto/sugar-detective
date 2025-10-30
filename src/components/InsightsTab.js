@@ -101,6 +101,7 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
         demographics: extractDemographics(participants),
         patterns: extractPatterns(participants),
         correlations: extractCorrelations(participants),
+        participants: participants, // Include raw participants for chunking analysis
         timestamp: new Date().toISOString(),
         note: 'Thursday data excluded (test data)'
       };

@@ -39,11 +39,17 @@ export default async function handler(req, res) {
     const totalParticipants = allParticipants.length;
     
     console.log(`Starting analysis of ${totalParticipants} participants...`);
-    
+
+    // If no participants, return fallback insights
+    if (totalParticipants === 0) {
+      console.log('No participants found, using fallback insights');
+      return res.status(200).json(generateFallbackInsights(aggregatedData, language));
+    }
+
     // CHUNKING STRATEGY
     const CHUNK_SIZE = 35; // ~7000-8000 tokens per chunk
     const chunks = [];
-    
+
     // Create chunks
     for (let i = 0; i < allParticipants.length; i += CHUNK_SIZE) {
       chunks.push({
@@ -53,7 +59,7 @@ export default async function handler(req, res) {
         endIdx: Math.min(i + CHUNK_SIZE, allParticipants.length)
       });
     }
-    
+
     console.log(`Created ${chunks.length} chunks for analysis`);
     
     // Analyze each chunk
@@ -213,9 +219,8 @@ ${JSON.stringify(allCorrelations.slice(0, 10))}
 
 STATISTICHE GLOBALI:
 - Partecipanti totali: ${fullData.totalParticipants}
-- Score medio: ${fullData.avgTotalScore}%
-- Conoscenza media: ${fullData.avgKnowledgeScore}%
-- Consapevolezza media: ${fullData.avgAwarenessScore}%
+- Demografia: ${JSON.stringify(fullData.demographics || {}).substring(0, 200)}
+- Pattern: ${JSON.stringify(fullData.patterns || {}).substring(0, 200)}
 
 Genera gli insights finali più interessanti e significativi.
 ${isItalian ? 'Rispondi in italiano.' : 'Respond in English.'}
