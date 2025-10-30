@@ -105,6 +105,15 @@ export default async function handler(req, res) {
     }
 
     console.log(`\n[${new Date().toISOString()}] All chunks processed. Synthesizing final insights...`);
+    console.log(`  Total chunk insights collected: ${chunkInsights.length}`);
+    console.log(`  Total patterns found: ${chunkInsights.flatMap(c => c.patterns || []).length}`);
+    console.log(`  Total anomalies found: ${chunkInsights.flatMap(c => c.anomalies || []).length}`);
+
+    // Check if we have any insights to synthesize
+    if (chunkInsights.length === 0) {
+      console.warn('  No chunk insights were successfully generated - using fallback');
+      return res.status(200).json(generateFallbackInsights(aggregatedData, language));
+    }
 
     // Synthesize all insights
     const finalInsights = await synthesizeInsights(
@@ -213,8 +222,15 @@ Rispondi SOLO con JSON valido in questo formato:
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error?.message || 'OpenAI API error');
+        const errorText = await response.text();
+        console.error(`    OpenAI chunk API error (${response.status}):`, errorText.substring(0, 200));
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          errorData = { error: { message: errorText } };
+        }
+        throw new Error(`OpenAI API error (${response.status}): ${errorData.error?.message || 'Unknown error'}`);
       }
 
       data = await response.json();
@@ -241,8 +257,15 @@ Rispondi SOLO con JSON valido in questo formato:
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error?.message || 'Claude API error');
+        const errorText = await response.text();
+        console.error(`    Claude chunk API error (${response.status}):`, errorText.substring(0, 200));
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          errorData = { error: { message: errorText } };
+        }
+        throw new Error(`Claude API error (${response.status}): ${errorData.error?.message || 'Unknown error'}`);
       }
 
       data = await response.json();
@@ -255,10 +278,19 @@ Rispondi SOLO con JSON valido in questo formato:
       .replace(/```\s*/gi, '')
       .trim();
 
-    return JSON.parse(cleanedText);
+    let parsed;
+    try {
+      parsed = JSON.parse(cleanedText);
+    } catch (parseError) {
+      console.error(`    JSON parse error in chunk ${chunk.index}:`, parseError.message);
+      console.error('    First 200 chars:', cleanedText.substring(0, 200));
+      throw parseError;
+    }
+
+    return parsed;
 
   } catch (error) {
-    console.error('Chunk analysis error:', error);
+    console.error(`✗ Chunk ${chunk.index} analysis error:`, error.message);
     return {
       patterns: [],
       anomalies: [],
@@ -327,6 +359,7 @@ Genera 8-9 curiosities basate sui pattern più forti trovati.`;
 
     if (useOpenAI) {
       // OpenAI GPT-4 API call
+      console.log('  Calling OpenAI API for synthesis...');
       response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -346,15 +379,24 @@ Genera 8-9 curiosities basate sui pattern più forti trovati.`;
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error?.message || 'OpenAI Synthesis API error');
+        const errorText = await response.text();
+        console.error(`  OpenAI API error (${response.status}):`, errorText);
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          errorData = { error: { message: errorText } };
+        }
+        throw new Error(`OpenAI Synthesis API error (${response.status}): ${errorData.error?.message || errorText}`);
       }
 
       data = await response.json();
       responseText = data.choices[0].message.content;
+      console.log('  OpenAI synthesis completed successfully');
 
     } else {
       // Claude API call (fallback)
+      console.log('  Calling Claude API for synthesis...');
       response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
@@ -374,30 +416,54 @@ Genera 8-9 curiosities basate sui pattern più forti trovati.`;
       });
 
       if (!response.ok) {
-        throw new Error('Claude Synthesis API error');
+        const errorText = await response.text();
+        console.error(`  Claude API error (${response.status}):`, errorText);
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          errorData = { error: { message: errorText } };
+        }
+        throw new Error(`Claude Synthesis API error (${response.status}): ${errorData.error?.message || errorText}`);
       }
 
       data = await response.json();
       responseText = data.content[0].text;
+      console.log('  Claude synthesis completed successfully');
     }
 
     // Clean and parse response
+    console.log('  Parsing synthesis response...');
     const cleanedText = responseText
       .replace(/```json\s*/gi, '')
       .replace(/```\s*/gi, '')
       .trim();
 
-    const insights = JSON.parse(cleanedText);
+    console.log(`  Response text length: ${cleanedText.length} characters`);
+
+    let insights;
+    try {
+      insights = JSON.parse(cleanedText);
+    } catch (parseError) {
+      console.error('  JSON parse error:', parseError.message);
+      console.error('  First 200 chars of response:', cleanedText.substring(0, 200));
+      throw new Error(`Failed to parse JSON response: ${parseError.message}`);
+    }
 
     // Ensure we have valid structure
     if (!insights.curiosities || insights.curiosities.length === 0) {
-      throw new Error('Invalid insights structure');
+      console.error('  Invalid insights structure - missing or empty curiosities');
+      console.error('  Insights keys:', Object.keys(insights));
+      throw new Error('Invalid insights structure: missing or empty curiosities array');
     }
 
+    console.log(`  ✓ Valid insights structure with ${insights.curiosities.length} curiosities`);
     return insights;
 
   } catch (error) {
-    console.error('Synthesis error:', error);
+    console.error('Synthesis error:', error.message);
+    console.error('Error stack:', error.stack);
+    console.log('  Falling back to local insights generation...');
     return generateFallbackInsights(fullData, isItalian ? 'it' : 'en');
   }
 }
