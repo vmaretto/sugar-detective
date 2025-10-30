@@ -37,7 +37,8 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
   const [showHistory, setShowHistory] = useState(false);
   const [favoriteInsights, setFavoriteInsights] = useState([]);
   const [apiConfigured, setApiConfigured] = useState(true);
-  
+  const [dataSnapshot, setDataSnapshot] = useState(null); // Snapshot dei dati quando gli insight sono generati
+
   // Chat state
   const [showChat, setShowChat] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
@@ -78,6 +79,16 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
         console.error('Error loading chat:', e);
       }
     }
+
+    // Load data snapshot
+    const savedSnapshot = localStorage.getItem('data_snapshot');
+    if (savedSnapshot) {
+      try {
+        setDataSnapshot(JSON.parse(savedSnapshot));
+      } catch (e) {
+        console.error('Error loading snapshot:', e);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -89,6 +100,49 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
+
+  // Funzione per creare uno snapshot dei dati
+  const createDataSnapshot = (participantsData) => {
+    return {
+      count: participantsData.length,
+      timestamp: new Date().toISOString(),
+      // Hash semplice basato su ID partecipanti e timestamp
+      participantIds: participantsData.map(p => p.id || p.timestamp).sort(),
+      // Checksum dei dati per rilevare modifiche
+      dataHash: JSON.stringify(participantsData.map(p => ({
+        id: p.id || p.timestamp,
+        measurements: Object.keys(p.data?.measurements || {}).length,
+        responses: Object.keys(p.data?.part2 || {}).length
+      })))
+    };
+  };
+
+  // Funzione per calcolare la percentuale di cambiamento
+  const calculateDataChangePercentage = () => {
+    if (!dataSnapshot) return 100; // Se non c'è snapshot, permetti rigenerazione
+
+    const currentCount = participants.length;
+    const snapshotCount = dataSnapshot.count;
+
+    // Calcola la percentuale di nuovi partecipanti
+    const newParticipantsPercentage = ((currentCount - snapshotCount) / snapshotCount) * 100;
+
+    // Controlla se ci sono nuovi ID partecipanti
+    const currentIds = participants.map(p => p.id || p.timestamp).sort();
+    const snapshotIds = dataSnapshot.participantIds || [];
+    const newIds = currentIds.filter(id => !snapshotIds.includes(id));
+    const newIdsPercentage = (newIds.length / snapshotCount) * 100;
+
+    // Ritorna la percentuale maggiore
+    return Math.max(newParticipantsPercentage, newIdsPercentage);
+  };
+
+  // Verifica se la rigenerazione è permessa (soglia 10%)
+  const canRegenerateInsights = () => {
+    if (!dataSnapshot) return true; // Prima generazione sempre permessa
+    const changePercentage = calculateDataChangePercentage();
+    return changePercentage >= 10; // Soglia del 10%
+  };
 
   const generateInsights = async () => {
     setLoading(true);
@@ -137,22 +191,32 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
 
       const data = await response.json();
       const claudeInsights = data.insights;
-      
+
       setInsights(claudeInsights);
       setApiConfigured(true);
-      
+
       // Save to history
       const newHistory = [claudeInsights, ...insightHistory].slice(0, 10);
       setInsightHistory(newHistory);
       localStorage.setItem('insight_history', JSON.stringify(newHistory));
+
+      // Crea e salva snapshot dei dati
+      const snapshot = createDataSnapshot(participants);
+      setDataSnapshot(snapshot);
+      localStorage.setItem('data_snapshot', JSON.stringify(snapshot));
       
     } catch (err) {
       console.error('Error generating insights:', err);
       setError(err.message);
-      
+
       // Generate local insights as fallback
       const localInsights = generateLocalInsights(participants);
       setInsights(localInsights);
+
+      // Salva snapshot anche per insights locali
+      const snapshot = createDataSnapshot(participants);
+      setDataSnapshot(snapshot);
+      localStorage.setItem('data_snapshot', JSON.stringify(snapshot));
     } finally {
       setLoading(false);
     }
@@ -944,20 +1008,28 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
             <History size={18} />
             {language === 'it' ? `Cronologia (${insightHistory.length})` : `History (${insightHistory.length})`}
           </button>
-          
+
           <button
             onClick={generateInsights}
+            disabled={!canRegenerateInsights()}
+            title={!canRegenerateInsights()
+              ? (language === 'it'
+                  ? `Rigenerazione disponibile quando i dati cambiano di almeno il 10%. Attualmente: ${calculateDataChangePercentage().toFixed(1)}%`
+                  : `Regeneration available when data changes by at least 10%. Currently: ${calculateDataChangePercentage().toFixed(1)}%`)
+              : ''
+            }
             style={{
               padding: '0.5rem 1rem',
-              background: '#10b981',
+              background: canRegenerateInsights() ? '#10b981' : '#9ca3af',
               color: 'white',
               border: 'none',
               borderRadius: '10px',
-              cursor: 'pointer',
+              cursor: canRegenerateInsights() ? 'pointer' : 'not-allowed',
               fontWeight: '600',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem'
+              gap: '0.5rem',
+              opacity: canRegenerateInsights() ? 1 : 0.6
             }}
           >
             <Sparkles size={18} />
@@ -965,6 +1037,27 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
           </button>
         </div>
       </div>
+
+      {/* Data change indicator */}
+      {dataSnapshot && !canRegenerateInsights() && (
+        <div style={{
+          background: '#fef3c7',
+          border: '2px solid #fbbf24',
+          borderRadius: '10px',
+          padding: '0.75rem 1rem',
+          marginTop: '1rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem'
+        }}>
+          <AlertCircle size={20} color="#92400e" />
+          <span style={{ color: '#92400e', fontSize: '0.875rem' }}>
+            {language === 'it'
+              ? `Rigenerazione disponibile quando i dati cambiano di almeno il 10%. Cambiamento attuale: ${calculateDataChangePercentage().toFixed(1)}%`
+              : `Regeneration available when data changes by at least 10%. Current change: ${calculateDataChangePercentage().toFixed(1)}%`}
+          </span>
+        </div>
+      )}
 
       {/* Chat Panel */}
       {showChat && (
