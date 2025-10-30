@@ -752,11 +752,36 @@ const InsightsTab = ({ participants: allParticipants, language = 'it' }) => {
         color: '#667eea'
       }}>
         <Brain size={48} style={{ margin: '0 auto 1rem', animation: 'pulse 2s infinite' }} />
-        <p style={{ fontSize: '1.25rem' }}>
-          {language === 'it' ? 'Claude sta analizzando i pattern nascosti...' : 'Claude is analyzing hidden patterns...'}
+        <p style={{ fontSize: '1.25rem', fontWeight: '600' }}>
+          {language === 'it' ? 'Claude sta analizzando TUTTI i dati...' : 'Claude is analyzing ALL data...'}
         </p>
         <p style={{ fontSize: '0.875rem', color: '#9ca3af', marginTop: '0.5rem' }}>
           {language === 'it' ? 'Cercando correlazioni laterali e curiose...' : 'Looking for lateral and curious correlations...'}
+        </p>
+        <p style={{
+          fontSize: '0.875rem',
+          color: '#f59e0b',
+          marginTop: '1rem',
+          fontWeight: '500',
+          padding: '0.75rem',
+          background: '#fef3c7',
+          borderRadius: '8px',
+          maxWidth: '400px',
+          margin: '1rem auto 0'
+        }}>
+          {language === 'it'
+            ? '⏱️ Analisi approfondita in corso su tutti i 250+ partecipanti. Può richiedere 1-2 minuti. Non chiudere la pagina!'
+            : '⏱️ Deep analysis in progress on all 250+ participants. May take 1-2 minutes. Don\'t close the page!'}
+        </p>
+        <p style={{
+          fontSize: '0.75rem',
+          color: '#6b7280',
+          marginTop: '1rem',
+          fontStyle: 'italic'
+        }}>
+          {language === 'it'
+            ? 'Puoi controllare il progresso dettagliato nei log di Vercel'
+            : 'You can check detailed progress in Vercel logs'}
         </p>
       </div>
     );

@@ -47,7 +47,9 @@ export default async function handler(req, res) {
     }
 
     // CHUNKING STRATEGY
-    const CHUNK_SIZE = 35; // ~7000-8000 tokens per chunk
+    // Larger chunks with longer delays to respect 50k tokens/minute rate limit
+    const CHUNK_SIZE = 50; // ~10000-12000 tokens per chunk
+    const DELAY_BETWEEN_CHUNKS = 12000; // 12 seconds = 5 chunks per minute max
     const chunks = [];
 
     // Create chunks
@@ -60,28 +62,47 @@ export default async function handler(req, res) {
       });
     }
 
+    const estimatedTime = Math.ceil(chunks.length * (DELAY_BETWEEN_CHUNKS / 1000 + 2));
     console.log(`Created ${chunks.length} chunks for analysis`);
-    
+    console.log(`Estimated completion time: ${estimatedTime} seconds (~${Math.ceil(estimatedTime / 60)} minutes)`);
+    console.log(`This may take a while - analysis is thorough and processes ALL participant data`);
+
     // Analyze each chunk
     const chunkInsights = [];
-    
+    const startTime = Date.now();
+
     for (const chunk of chunks) {
-      console.log(`Analyzing chunk ${chunk.index}/${chunks.length} (participants ${chunk.startIdx + 1}-${chunk.endIdx})`);
-      
+      const chunkStartTime = Date.now();
+      console.log(`\n[${new Date().toISOString()}] Analyzing chunk ${chunk.index}/${chunks.length} (participants ${chunk.startIdx + 1}-${chunk.endIdx})`);
+
       try {
         const insights = await analyzeChunk(chunk, chunks.length, apiKey, isItalian);
         chunkInsights.push(insights);
-        
-        // Wait 500ms between calls to avoid rate limiting
+
+        const chunkDuration = ((Date.now() - chunkStartTime) / 1000).toFixed(1);
+        const totalElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+        const remainingChunks = chunks.length - chunk.index;
+        const estimatedRemaining = Math.ceil(remainingChunks * (DELAY_BETWEEN_CHUNKS / 1000 + 2));
+
+        console.log(`✓ Chunk ${chunk.index} completed in ${chunkDuration}s (${totalElapsed}s total elapsed)`);
+        console.log(`  Found ${insights.patterns?.length || 0} patterns, ${insights.anomalies?.length || 0} anomalies`);
+        console.log(`  Progress: ${chunk.index}/${chunks.length} chunks (${Math.round(chunk.index/chunks.length*100)}%)`);
+        console.log(`  Estimated remaining time: ~${estimatedRemaining} seconds`);
+
+        // Wait between calls to respect rate limiting (50k tokens/minute)
         if (chunk.index < chunks.length) {
-          await new Promise(resolve => setTimeout(resolve, 500));
+          console.log(`  Waiting ${DELAY_BETWEEN_CHUNKS/1000} seconds before next chunk...`);
+          await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_CHUNKS));
         }
       } catch (error) {
-        console.error(`Error analyzing chunk ${chunk.index}:`, error);
+        console.error(`✗ Error analyzing chunk ${chunk.index}:`, error.message);
+        console.log(`  Continuing with remaining chunks...`);
         // Continue with other chunks even if one fails
       }
     }
-    
+
+    console.log(`\n[${new Date().toISOString()}] All chunks processed. Synthesizing final insights...`);
+
     // Synthesize all insights
     const finalInsights = await synthesizeInsights(
       chunkInsights,
@@ -89,13 +110,21 @@ export default async function handler(req, res) {
       apiKey,
       isItalian
     );
-    
+
+    const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.log(`\n[${new Date().toISOString()}] ✓ Analysis complete!`);
+    console.log(`  Total time: ${totalTime}s (~${Math.ceil(totalTime / 60)} minutes)`);
+    console.log(`  Participants analyzed: ${totalParticipants}`);
+    console.log(`  Chunks processed: ${chunks.length}`);
+    console.log(`  Insights generated: ${finalInsights.curiosities?.length || 0}`);
+
     // Add metadata
     finalInsights.generatedAt = new Date().toISOString();
     finalInsights.participantCount = totalParticipants;
     finalInsights.analysisMethod = 'complete_chunk_analysis';
     finalInsights.chunksAnalyzed = chunks.length;
-    
+    finalInsights.analysisTimeSeconds = parseFloat(totalTime);
+
     return res.status(200).json(finalInsights);
     
   } catch (error) {
