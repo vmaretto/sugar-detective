@@ -91,9 +91,9 @@ function Part3Screen() {
     <div className="screen" style={{ paddingTop: '40px', paddingBottom: '40px' }}>
       <div className="container" style={{ maxWidth: '700px' }}>
         <div className="card">
-          <h2>Parte 3 - Conoscenza oggettiva</h2>
+          <h2>{t('pretest.part3.title')}</h2>
           <p style={{ marginBottom: '24px' }}>
-            Per ogni coppia di alimenti, indica quale pensi contenga <strong>più zucchero</strong>:
+            {t('pretest.part3.instructions')}
           </p>
 
           {pairs.map((pair, index) => (
@@ -135,7 +135,7 @@ function Part3Screen() {
                     checked={responses[pair.id] === 'a_more'}
                     onChange={(e) => handleComparisonSelect(pair.id, e.target.value)}
                   />
-                  {pair.foodA?.emoji} Più zucchero
+                  {pair.foodA?.emoji} {t('pretest.part3.more')}
                 </label>
                 
                 <label className={`radio-option ${responses[pair.id] === 'equal' ? 'selected' : ''}`} style={{ flex: 1 }}>
@@ -146,7 +146,7 @@ function Part3Screen() {
                     checked={responses[pair.id] === 'equal'}
                     onChange={(e) => handleComparisonSelect(pair.id, e.target.value)}
                   />
-                  Uguale
+                  {t('pretest.equal')}
                 </label>
                 
                 <label className={`radio-option ${responses[pair.id] === 'b_more' ? 'selected' : ''}`} style={{ flex: 1 }}>
@@ -157,7 +157,7 @@ function Part3Screen() {
                     checked={responses[pair.id] === 'b_more'}
                     onChange={(e) => handleComparisonSelect(pair.id, e.target.value)}
                   />
-                  {pair.foodB?.emoji} Più zucchero
+                  {pair.foodB?.emoji} {t('pretest.part3.more')}
                 </label>
               </div>
             </div>

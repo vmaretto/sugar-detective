@@ -34,7 +34,7 @@ function AwarenessScreen() {
   return (
     <div className="screen">
       <div className="card">
-        <h2>Parte 4 - Consapevolezza e percezione</h2>
+        <h2>{t('awareness.part4.title')}</h2>
         
         <form onSubmit={handleSubmit}>
           {/* Question 1: Surprised about vegetables containing sugar */}

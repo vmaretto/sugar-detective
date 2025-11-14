@@ -62,9 +62,9 @@ function MeasurementScreen() {
       <div style={{ flex: 1 }}>
         <div className="container" style={{ maxWidth: '700px' }}>
           <div className="card">
-            <h2>Misurazione con spettrometro</h2>
+            <h2>{t('measurement.screen.title')}</h2>
             <p style={{ marginBottom: '16px' }}>
-              <strong>Ora usa lo spettrometro per misurare ogni alimento</strong> e inserisci i valori rilevati qui sotto:
+              {t('measurement.detailed.instructions')}
             </p>
 
             {/* Spiegazione Brix */}

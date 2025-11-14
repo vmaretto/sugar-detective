@@ -131,7 +131,7 @@ function PreTestScreen() {
       <div style={{ flex: 1 }}>
         <div className="container" style={{ maxWidth: '700px' }}>
           <div className="card">
-            <h2>Parte 2 - Conoscenza percepita</h2>
+            <h2>{t('pretest.part2.title')}</h2>
             <p>{t('pretest.instructions')}:</p>
             <div style={{
               background: '#f0f9ff',

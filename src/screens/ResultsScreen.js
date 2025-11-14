@@ -250,7 +250,7 @@ const ResultsScreen = () => {
                 boxShadow: '0 8px 20px rgba(102, 126, 234, 0.3)'
               }}>
                 <div style={{ fontSize: '0.875rem', opacity: 0.9, marginBottom: '0.5rem' }}>
-                  {i18n.language === 'it' ? 'Punteggio Totale' : 'Total Score'}
+                  {t('results.totalScore')}
                 </div>
                 <div style={{ fontSize: '3rem', fontWeight: 'bold' }}>
                   {personalScores.totalScore}
@@ -270,7 +270,7 @@ const ResultsScreen = () => {
                 boxShadow: '0 4px 12px rgba(16, 185, 129, 0.1)'
               }}>
                 <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
-                  {i18n.language === 'it' ? 'Conoscenza' : 'Knowledge'}
+                  {t('results.knowledge')}
                 </div>
                 <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981' }}>
                   {personalScores.knowledgeScore}
@@ -290,7 +290,7 @@ const ResultsScreen = () => {
                 boxShadow: '0 4px 12px rgba(245, 158, 11, 0.1)'
               }}>
                 <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
-                  {i18n.language === 'it' ? 'Consapevolezza' : 'Awareness'}
+                  {t('results.awarenessLabel')}
                 </div>
                 <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f59e0b' }}>
                   {personalScores.awarenessScore}
@@ -311,20 +311,11 @@ const ResultsScreen = () => {
             }}>
               <div style={{ fontSize: '0.875rem', color: '#666', lineHeight: '1.6' }}>
                 <strong style={{ color: '#667eea' }}>
-                  {i18n.language === 'it' ? '📊 Come calcoliamo il punteggio:' : '📊 How we calculate the score:'}
+                  {t('results.scoreCalculation')}
                 </strong>
                 <br />
-                {i18n.language === 'it' ? (
-                  <>
-                    • <strong>Conoscenza (70%):</strong> Precisione delle tue stime di dolcezza<br />
-                    • <strong>Consapevolezza (30%):</strong> Quanto conosci i tuoi limiti
-                  </>
-                ) : (
-                  <>
-                    • <strong>Knowledge (70%):</strong> Accuracy of your sweetness estimates<br />
-                    • <strong>Awareness (30%):</strong> How well you know your limits
-                  </>
-                )}
+                {t('results.scoreCalc.knowledge')}<br />
+                {t('results.scoreCalc.awareness')}
               </div>
             </div>
           </div>

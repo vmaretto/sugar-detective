@@ -39,6 +39,10 @@ const resources = {
       
       // Pre-Test Questions
       "pretest.title": "Quanto ne sai?",
+      "pretest.part2.title": "Parte 2 - Conoscenza percepita",
+      "pretest.part3.title": "Parte 3 - Conoscenza oggettiva",
+      "pretest.part3.instructions": "Per ogni coppia di alimenti, indica quale pensi contenga più zucchero:",
+      "pretest.part3.more": "Più zucchero",
       "pretest.instructions": "Per ogni alimento, indica quanto pensi che sia dolce (cioè quanto zucchero naturale contiene) su una scala da 1 a 5",
       "pretest.scale1": "1 = pochissimo zucchero",
       "pretest.scale5": "5 = molto zucchero",
@@ -52,6 +56,7 @@ const resources = {
       
       // Awareness Questions
       "awareness.title": "La tua consapevolezza",
+      "awareness.part4.title": "Parte 4 - Consapevolezza e percezione",
       "awareness.surprised": "Ti sorprende sapere che alcune verdure contengono zuccheri naturali?",
       "awareness.influence": "Ritieni che conoscere il contenuto zuccherino possa influenzare le tue scelte alimentari?",
       "awareness.influence.very": "Sì molto",
@@ -67,7 +72,9 @@ const resources = {
       
       // Measurement Screen
       "measurement.title": "Ora misura!",
+      "measurement.screen.title": "Misurazione con spettrometro",
       "measurement.instructions": "Usa lo spettrometro per misurare ogni alimento e inserisci i valori rilevati:",
+      "measurement.detailed.instructions": "Usa lo spettrometro per misurare ogni prodotto e inserisci il valore rilevato nel campo corrispondente.",
       "measurement.brix": "°Brix",
       "measurement.brixExplanation": "Il Brix è una misura che serve per capire quanto zucchero c'è in un frutto o in una verdura. Più il valore di Brix è alto, più il prodotto è dolce, gustoso e nutriente. In pratica, un frutto con un Brix alto contiene più zuccheri naturali, ma anche più vitamine, minerali e sostanze buone per la salute. Per questo i coltivatori usano il Brix per valutare la qualità e la maturazione dei loro prodotti — un po' come un \"indice di bontà e nutrimento\".",
       "measurement.placeholder.brix": "es. 12.5",
@@ -75,6 +82,8 @@ const resources = {
       
       // Post-Test Questions
       "posttest.title": "Dopo la misurazione",
+      "posttest.part5.title": "Parte 5 - Dopo la misurazione",
+      "posttest.instructions": "Rispondi a queste ultime domande sulla tua esperienza:",
       "posttest.different": "Il risultato è diverso da quello che ti aspettavi?",
       "posttest.awareness": "Ti senti più consapevole di quanto zucchero contengono i diversi alimenti?",
       "posttest.awareness.much": "Molto di più",
@@ -110,7 +119,13 @@ const resources = {
       "results.share": "Condividi",
       "results.finish": "Fine",
       "results.download": "Scarica immagine",
-      
+      "results.totalScore": "Punteggio Totale",
+      "results.knowledge": "Conoscenza",
+      "results.awarenessLabel": "Consapevolezza",
+      "results.scoreCalculation": "📊 Come calcoliamo il punteggio:",
+      "results.scoreCalc.knowledge": "• Conoscenza (70%): Precisione delle tue stime di dolcezza",
+      "results.scoreCalc.awareness": "• Consapevolezza (30%): Quanto conosci i tuoi limiti",
+
       // Dashboard
       "dashboard.title": "SUGAR DETECTIVE - STATISTICHE LIVE",
       "dashboard.participants": "Partecipanti oggi",
@@ -189,6 +204,10 @@ const resources = {
       
       // Pre-Test Questions
       "pretest.title": "How much do you know?",
+      "pretest.part2.title": "Part 2 - Perceived Knowledge",
+      "pretest.part3.title": "Part 3 - Objective Knowledge",
+      "pretest.part3.instructions": "For each pair of foods, indicate which one you think contains more sugar:",
+      "pretest.part3.more": "More sugar",
       "pretest.instructions": "For each food, indicate how sweet you think it is (i.e., how much natural sugar it contains) on a scale from 1 to 5",
       "pretest.scale1": "1 = very little sugar",
       "pretest.scale5": "5 = a lot of sugar",
@@ -202,6 +221,7 @@ const resources = {
       
       // Awareness Questions
       "awareness.title": "Your awareness",
+      "awareness.part4.title": "Part 4 - Awareness and Perception",
       "awareness.surprised": "Are you surprised to know that some vegetables contain natural sugars?",
       "awareness.influence": "Do you think knowing the sugar content could influence your food choices?",
       "awareness.influence.very": "Yes very much",
@@ -217,7 +237,9 @@ const resources = {
       
       // Measurement Screen
       "measurement.title": "Now measure!",
+      "measurement.screen.title": "Measurement with spectrometer",
       "measurement.instructions": "Use the spectrometer to measure each food and enter the detected values:",
+      "measurement.detailed.instructions": "Use the spectrometer to measure each product and enter the detected value in the corresponding field.",
       "measurement.brix": "°Brix",
       "measurement.brixExplanation": "Brix is a measure used to understand how much sugar is in a fruit or vegetable. The higher the Brix value, the sweeter, tastier, and more nutritious the product is. In practice, a fruit with high Brix contains more natural sugars, but also more vitamins, minerals, and beneficial substances for health. That's why growers use Brix to evaluate the quality and ripeness of their products — a bit like a \"goodness and nutrition index\".",
       "measurement.placeholder.brix": "e.g. 12.5",
@@ -225,6 +247,8 @@ const resources = {
       
       // Post-Test Questions
       "posttest.title": "After the measurement",
+      "posttest.part5.title": "Part 5 - After the measurement",
+      "posttest.instructions": "Answer these last questions about your experience:",
       "posttest.different": "Is the result different from what you expected?",
       "posttest.awareness": "Do you feel more aware of how much sugar different foods contain?",
       "posttest.awareness.much": "Much more",
@@ -260,7 +284,13 @@ const resources = {
       "results.share": "Share",
       "results.finish": "Finish",
       "results.download": "Download image",
-      
+      "results.totalScore": "Total Score",
+      "results.knowledge": "Knowledge",
+      "results.awarenessLabel": "Awareness",
+      "results.scoreCalculation": "📊 How we calculate the score:",
+      "results.scoreCalc.knowledge": "• Knowledge (70%): Accuracy of your sweetness estimates",
+      "results.scoreCalc.awareness": "• Awareness (30%): How well you know your limits",
+
       // Dashboard
       "dashboard.title": "SUGAR DETECTIVE - LIVE STATS",
       "dashboard.participants": "Participants today",

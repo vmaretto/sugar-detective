@@ -100,9 +100,9 @@ function PostTestScreen() {
     <div className="screen" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div className="card">
-          <h2>Parte 5 - Dopo la misurazione</h2>
+          <h2>{t('posttest.part5.title')}</h2>
           <p style={{ marginBottom: '24px' }}>
-            Dopo aver osservato la misurazione reale del contenuto zuccherino con lo strumento:
+            {t('posttest.instructions')}
           </p>
           
           <form onSubmit={handleSubmit}>
